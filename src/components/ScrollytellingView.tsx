@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import scrollama from 'scrollama';
 import { 
   ContractTrace, 
   TraceStep, 
@@ -169,34 +168,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   useEffect(() => {
     setExpandedExcerpt(false);
   }, [selectedStep, selectedAlternative]);
-
-  useEffect(() => {
-    if (!steps.length) {
-      return;
-    }
-
-    const scroller = scrollama();
-
-    const handleStepEnter = (response: { element: HTMLElement; index: number }) => {
-      const nextIndex = Number(response.element.dataset.stepIndex ?? response.index ?? 0);
-      if (!Number.isNaN(nextIndex) && nextIndex >= 0 && nextIndex < steps.length) {
-        handleStepJump(nextIndex);
-      }
-    };
-
-    scroller
-      .setup({
-        step: '.story-step',
-        offset: 0.5,
-        threshold: 4,
-        debug: false,
-      })
-      .onStepEnter(handleStepEnter);
-
-    return () => {
-      scroller.destroy();
-    };
-  }, [steps.length]);
 
   // Audio speech narration using Web Speech API (with pt-PT European Portuguese detection)
   const handleToggleSpeech = () => {
