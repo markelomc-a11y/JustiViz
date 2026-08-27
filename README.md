@@ -71,6 +71,8 @@ Express + Vite (server.ts)
         +-- /api/segment-contract --> Python (agent/segmentation.py)
         +-- /api/analyze-contract  --> agente LangGraph local
         +-- /api/audit-faithfulness --> auditoria local simulada
+        |
+        +-- Integração futura      --> modelos LLM locais através do Ollama
 ```
 
 Tecnologias principais:
@@ -80,6 +82,7 @@ Tecnologias principais:
 - D3.js para o grafo dirigido;
 - Scrollama para os eventos da narrativa;
 - LangGraph para a cadeia de estados da análise;
+- Ollama e modelos LLM locais como integração prevista;
 - Python para a segmentação de cláusulas;
 - Tailwind CSS para a interface;
 - Lucide React para os ícones da aplicação.
@@ -139,6 +142,12 @@ PYTHONPATH=. pytest -q tests/test_clause_segmentation.py
 O JustiViz é um **protótipo académico e demonstrador de interação**, desenvolvido para estudar apresentação, exploração e validação de resultados de agentes de IA. Não fornece aconselhamento jurídico, não substitui profissionais qualificados e não deve ser utilizado como único fundamento para decisões contratuais.
 
 As análises locais, os casos de estudo e as auditorias simuladas servem para demonstrar os conceitos da aplicação. A qualidade das respostas de um modelo externo depende da configuração do serviço, do texto fornecido e dos mecanismos de validação disponíveis.
+
+## Trabalho futuro: modelos locais Ollama
+
+Está prevista a integração de **modelos LLM locais através do Ollama** para realizar as tarefas que atualmente são simuladas, nomeadamente a classificação de risco, as anotações gerativas, a auditoria de fidelidade e o apoio à síntese das recomendações.
+
+A arquitetura da aplicação foi desenvolvida considerando esta evolução. O LangGraph funciona como camada de orquestração dos diferentes estados e nós do processo, permitindo substituir progressivamente a lógica determinística e os marcadores simulados por chamadas a modelos locais, mantendo a estrutura da narrativa, do grafo, dos dados técnicos e da validação humana.
 
 ## Autoria
 

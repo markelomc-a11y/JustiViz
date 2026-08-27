@@ -58,7 +58,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const wheelLockRef = useRef<number>(0);
   const clauseItems = Array.isArray(trace.clauses) ? trace.clauses : [];
   const graphStatePath = useMemo(
-    () => ['extract_clauses', 'classify_risk', 'check_precedent', 'faithfulness_audit', 'verdict_synthesis'],
+    () => ['Extração de cláusulas', 'Classificação de risco', 'Consulta de precedentes', 'Auditoria de fidelidade', 'Síntese do veredito'],
     []
   );
 
@@ -347,16 +347,19 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Mock LangGraph state</span>
+              <span>Estado simulado do LangGraph</span>
             </div>
             <span className="text-[10px] text-indigo-700">
-              active: <strong>{activeStep?.node_name || 'extract_clauses'}</strong>
+              ativo: <strong>{activeStep?.node_name || 'extract_clauses'}</strong>
             </span>
           </div>
+          <p className="mt-1 text-[10px] leading-relaxed text-indigo-700">
+            Este bloco representa, de forma simplificada, o percurso de estados do agente LangGraph. As cores acompanham a posição atual na narrativa, incluindo etapas que podem ser agrupadas ou omitidas por um rasto específico.
+          </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {graphStatePath.map((stateName, idx) => {
-              const isActive = stateName === activeStep?.node_name;
-              const isPast = !!activeStep && graphStatePath.indexOf(activeStep.node_name) > idx;
+              const isActive = idx === currentStepIndex;
+              const isPast = idx < currentStepIndex;
 
               return (
                 <span
@@ -369,7 +372,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                       : 'border-slate-200 bg-white text-slate-500'
                   }`}
                 >
-                  {idx + 1}. {stateName.replace(/_/g, ' ')}
+                  {idx + 1}. {stateName}
                 </span>
               );
             })}
@@ -642,10 +645,10 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                Regulamento IA UE: {trace.final_verdict.eu_ai_act_risk_tier}
+                Regulamento IA UE: {activeClauseTrace.final_verdict.eu_ai_act_risk_tier}
               </span>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Índice de Risco: {trace.final_verdict.risk_score}/100
+                Índice de Risco: {activeClauseTrace.final_verdict.risk_score}/100
               </span>
             </div>
           </div>
@@ -656,10 +659,10 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 Classificação Executiva
               </h3>
               <p className="text-sm font-semibold text-slate-900">
-                {trace.final_verdict.classification}
+                {activeClauseTrace.final_verdict.classification}
               </p>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {trace.final_verdict.summary}
+                {activeClauseTrace.final_verdict.summary}
               </p>
             </div>
 
@@ -668,7 +671,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 Ações de Revisão Recomendadas
               </h3>
               <ul className="space-y-1.5 text-xs text-slate-700">
-                {trace.final_verdict.recommended_clauses.map((clause, idx) => (
+                {activeClauseTrace.final_verdict.recommended_clauses.map((clause, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-emerald-600 font-bold">✓</span>
                     <span>{clause}</span>
