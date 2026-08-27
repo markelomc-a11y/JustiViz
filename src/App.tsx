@@ -11,7 +11,6 @@ import { Navbar } from './components/Navbar';
 import { ScrollytellingView } from './components/ScrollytellingView';
 import { RelianceLab } from './components/RelianceLab';
 import { CustomContractAnalyzer } from './components/CustomContractAnalyzer';
-import { HierarchicalZoomDrawer } from './components/HierarchicalZoomDrawer';
 import { MethodologyHelpModal } from './components/MethodologyHelpModal';
 
 const ALL_INITIAL_CASE_STUDIES: ContractTrace[] = [
@@ -115,16 +114,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Semantic Zoom Focus+Context Drawer */}
-      {activeMode !== 'scrollytelling' && (
-        <HierarchicalZoomDrawer
-          step={selectedStep}
-          onClose={() => setSelectedStep(null)}
-          zoomLevel={zoomLevel}
-          onToggleZoom={setZoomLevel}
-        />
-      )}
 
       {/* Scientific Methodology Modal */}
       <MethodologyHelpModal

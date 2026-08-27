@@ -16,10 +16,10 @@ export function generateStaticTracePt({
   const traceId = `pt-custom-trace-${Date.now()}`;
 
   // Analyze text characteristics under Portuguese Law (Código Civil & DL 446/85 LCCG)
-  const isIndemnity = lowerText.includes('indemniz') || lowerText.includes('ressarcir') || lowerText.includes('perdas e danos') || category.includes('Indemnização');
-  const isNonCompete = lowerText.includes('não concorrência') || lowerText.includes('concorrente') || lowerText.includes('exclusividade') || category.includes('Não Concorrência');
-  const isLiabilityCap = lowerText.includes('limita') || lowerText.includes('responsabilidade') || lowerText.includes('excede') || category.includes('Responsabilidade');
-  const isTermination = lowerText.includes('resolu') || lowerText.includes('denúncia') || lowerText.includes('rescis') || category.includes('Denúncia');
+  const isIndemnity = lowerText.includes('indemniz') || lowerText.includes('ressarcir') || lowerText.includes('perdas e danos');
+  const isNonCompete = lowerText.includes('não concorrência') || lowerText.includes('concorrente') || lowerText.includes('exclusividade');
+  const isLiabilityCap = lowerText.includes('limita') || lowerText.includes('responsabilidade') || lowerText.includes('excede');
+  const isTermination = lowerText.includes('resolu') || lowerText.includes('denúncia') || lowerText.includes('rescis');
   const isRgpd = lowerText.includes('rgpd') || lowerText.includes('dados pessoais') || lowerText.includes('violação de segurança') || lowerText.includes('cnpd');
   const isUnlimited = lowerText.includes('ilimitad') || lowerText.includes('sem limite') || lowerText.includes('não se aplica') || lowerText.includes('exclui qualquer teto');
   const hasDoloOrCulpaGrave = lowerText.includes('dolo') || lowerText.includes('culpa grave');
@@ -411,6 +411,7 @@ export function buildClauseTraceSetPt({
 
     enrichedTrace.steps = enrichedTrace.steps.map((step, stepIdx) => ({
       ...step,
+      step_id: `${step.step_id}-clause-${clauseNumber}`,
       title: stepIdx === 0 ? clauseTitle : step.title,
       payload: {
         ...step.payload,

@@ -410,6 +410,7 @@ export function buildClauseTraceSet({
 
     enrichedTrace.steps = enrichedTrace.steps.map((step, stepIdx) => ({
       ...step,
+      step_id: `${step.step_id}-clause-${clauseNumber}`,
       title: stepIdx === 0 ? clauseTitle : step.title,
       payload: {
         ...step.payload,
