@@ -50,7 +50,7 @@ Quando um contrato contém várias cláusulas, estas são segmentadas e podem se
 
 ### Analisador de contratos
 
-O analisador aceita texto introduzido manualmente e ficheiros `.txt`, `.docx` ou `.pdf`. A análise pode utilizar o agente LangGraph através da API Gemini, quando configurada, ou uma representação local de contingência para permitir a utilização do protótipo sem uma chave externa.
+O analisador aceita texto introduzido manualmente e ficheiros `.txt`, `.docx` ou `.pdf`. A análise é executada pelo agente LangGraph local, com uma representação de contingência para permitir a utilização do protótipo mesmo quando algum serviço auxiliar não está disponível.
 
 ### Laboratório de confiança
 
@@ -69,7 +69,7 @@ React + TypeScript
 Express + Vite (server.ts)
         |
         +-- /api/segment-contract --> Python (agent/segmentation.py)
-        +-- /api/analyze-contract  --> LangGraph + Gemini, quando disponível
+        +-- /api/analyze-contract  --> agente LangGraph local
         +-- /api/audit-faithfulness --> auditoria local simulada
 ```
 
@@ -80,7 +80,6 @@ Tecnologias principais:
 - D3.js para o grafo dirigido;
 - Scrollama para os eventos da narrativa;
 - LangGraph para a cadeia de estados da análise;
-- Google Gemini através de `@google/genai`, opcionalmente;
 - Python para a segmentação de cláusulas;
 - Tailwind CSS para a interface;
 - Lucide React para os ícones da aplicação.
@@ -118,13 +117,7 @@ npm run dev
 
 O servidor é iniciado na porta `3000`. A aplicação fica normalmente disponível em `http://localhost:3000`.
 
-Para ativar a análise com Gemini, criar um ficheiro `.env` na raiz do projeto e definir:
-
-```env
-GEMINI_API_KEY=a_sua_chave
-```
-
-Sem esta variável, o protótipo utiliza a lógica local de contingência. Esta alternativa destina-se a demonstração e experimentação académica, não a substituir um serviço de análise jurídica validado.
+O agente LangGraph é executado localmente. Se algum componente auxiliar não estiver disponível, o protótipo utiliza a lógica local de contingência. Esta alternativa destina-se a demonstração e experimentação académica, não a substituir um serviço de análise jurídica validado.
 
 ## Scripts disponíveis
 

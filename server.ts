@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { spawnSync } from "child_process";
-import { GoogleGenAI, Type } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { runLangGraphPipeline } from "./src/utils/langgraphPipeline";
 import { runMockFaithfulnessAudit } from "./src/utils/mockLangGraph";
@@ -14,27 +13,11 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "10mb" }));
 
-// Lazy initialization of Gemini client
-let aiClient: GoogleGenAI | null = null;
-function getAI(): GoogleGenAI | null {
-  if (!aiClient && process.env.GEMINI_API_KEY) {
-    aiClient = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
-  }
-  return aiClient;
-}
-
 // Health check
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
-    hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    hasLangGraph: true,
     timestamp: new Date().toISOString(),
   });
 });

@@ -21,6 +21,15 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+const CATEGORY_OPTIONS = [
+  'DL 446/85 (LCCG) • Indemnização e Responsabilidade',
+  'Código do Trabalho (Art. 136.º) • Não-Concorrência',
+  'RGPD (Regulamento UE 2016/679) • Notificação de Incidentes',
+  'CUAD: Indemnification & IP Infringement',
+  'CUAD: Limitation of Liability',
+  'CUAD: Non-Compete & Exclusivity',
+];
+
 interface CustomContractAnalyzerProps {
   onAddCustomTrace: (trace: ContractTrace) => void;
   onNavigateToScrollytelling: () => void;
@@ -32,6 +41,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
 }) => {
   const [contractTitle, setContractTitle] = useState<string>('Acordo de Prestação de Serviços Empresariais');
   const [category, setCategory] = useState<string>('DL 446/85 (LCCG) • Indemnização e Responsabilidade');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([CATEGORY_OPTIONS[0]]);
   const [contractText, setContractText] = useState<string>(
     `CLÁUSULA 12.ª — INDEMNIZAÇÃO E LIMITAÇÃO DE REMÉDIOS.
   12.1 O Prestador defenderá e indemnizará o Cliente contra qualquer reclamação de terceiros que alegue que os Serviços Cloud violam uma patente, direito de autor ou marca.
@@ -43,6 +53,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
   const [aiStatus, setAiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastGeneratedTrace, setLastGeneratedTrace] = useState<ContractTrace | null>(null);
   const [clauses, setClauses] = useState<Array<{ index: number; title: string; text: string }>>([]);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const segmentContractText = async (text: string) => {
@@ -73,7 +84,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
   ) => {
     const clauseTrace = buildTraceFromContractText({
       contractTitle,
-      category,
+      category: selectedCategories.join(' • '),
       contractText,
       segmentList,
     });
@@ -126,7 +137,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
       .then((response) => response.json())
       .then((payload) => {
         if (!cancelled) {
-          setAiStatus(payload?.status === 'ok' && Boolean(payload?.hasApiKey) ? 'online' : 'offline');
+          setAiStatus(payload?.status === 'ok' && Boolean(payload?.hasLangGraph) ? 'online' : 'offline');
         }
       })
       .catch(() => {
@@ -178,6 +189,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
   const handleApplyPreset = async (preset: typeof samplePresets[0]) => {
     setContractTitle(preset.title);
     setCategory(preset.category);
+    setSelectedCategories([preset.category]);
     setContractText(preset.text);
     await segmentContractText(preset.text);
   };
@@ -201,7 +213,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
         body: JSON.stringify({
           contractText,
           contractTitle,
-          category,
+          category: selectedCategories.join(' • '),
         }),
       });
 
@@ -228,7 +240,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
 
       const fullTrace = buildFallbackTrace({
         contractTitle,
-        category,
+        category: selectedCategories.join(' • '),
         contractText,
       });
 
@@ -240,7 +252,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
 
       const fullTrace = buildFallbackTrace({
         contractTitle,
-        category,
+        category: selectedCategories.join(' • '),
         contractText,
       });
 
@@ -310,18 +322,43 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700">Categoria Jurídica Alvo</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-50 text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white"
-              >
-                <option value="DL 446/85 (LCCG) • Indemnização e Responsabilidade">DL 446/85 (LCCG) • Indemnização e Responsabilidade</option>
-                <option value="Código do Trabalho (Art. 136.º) • Não-Concorrência">Código do Trabalho (Art. 136.º) • Não-Concorrência</option>
-                <option value="RGPD (Regulamento UE 2016/679) • Notificação de Incidentes">RGPD (Regulamento UE 2016/679) • Violação de Dados</option>
-                <option value="CUAD: Indemnification & IP Infringement">CUAD: Indemnização & Propriedade Intelectual</option>
-                <option value="CUAD: Limitation of Liability">CUAD: Limitação de Responsabilidade & Tetos</option>
-                <option value="CUAD: Non-Compete & Exclusivity">CUAD: Não-Concorrência & Exclusividade</option>
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryMenuOpen((isOpen) => !isOpen)}
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-left text-xs text-slate-800 hover:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  aria-expanded={isCategoryMenuOpen}
+                  aria-haspopup="true"
+                >
+                  {selectedCategories.length === 0
+                    ? 'Selecione uma ou mais categorias'
+                    : `${selectedCategories.length} categoria${selectedCategories.length === 1 ? '' : 's'} selecionada${selectedCategories.length === 1 ? '' : 's'}`}
+                </button>
+                {isCategoryMenuOpen && (
+                  <div className="absolute left-0 right-0 z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                    {CATEGORY_OPTIONS.map((option) => (
+                      <label key={option} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-2 text-[11px] text-slate-700 hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(option)}
+                          onChange={(event) => {
+                            const nextCategories = event.target.checked
+                              ? [...selectedCategories, option]
+                              : selectedCategories.filter((selectedCategory) => selectedCategory !== option);
+                            setSelectedCategories(nextCategories);
+                            setCategory(nextCategories.join(' • '));
+                          }}
+                          className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20"
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500">
+                {selectedCategories.length > 0 ? selectedCategories.join(' • ') : 'Nenhuma categoria selecionada'}
+              </p>
             </div>
           </div>
 
@@ -391,7 +428,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
               <span className={`h-2 w-2 rounded-full ${
                 aiStatus === 'online' ? 'bg-emerald-500' : aiStatus === 'offline' ? 'bg-amber-500' : 'bg-slate-400'
               }`} />
-              {aiStatus === 'online' ? 'Tempo real' : aiStatus === 'offline' ? 'Modo contingência' : 'A verificar...'}
+              {aiStatus === 'online' ? 'LangGraph ativo' : aiStatus === 'offline' ? 'Modo contingência' : 'A verificar...'}
             </span>
           </div>
 

@@ -6,7 +6,7 @@ import {
   RiskLevel,
   ForkedAlternative
 } from '../types';
-import { buildMockAnnotation, runMockFaithfulnessAudit } from '../utils/mockLangGraph';
+import { runMockFaithfulnessAudit } from '../utils/mockLangGraph';
 import { GraphCanvas } from './GraphCanvas';
 import { 
   Play, 
@@ -76,18 +76,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
   const excerptText = currentClause?.text || trace.contract_excerpt || '';
 
-  const mockAnnotation = useMemo(() => {
-    if (!activeStep) return null;
-
-    return buildMockAnnotation({
-      nodeName: activeStep.node_name,
-      title: activeStep.title,
-      summary: activeStep.summary,
-      category: trace.category,
-      contractText: trace.contract_excerpt || excerptText || '',
-      riskLevel: activeStep.risk_level,
-    });
-  }, [activeStep, trace.category, trace.contract_excerpt, excerptText]);
+  const mockAnnotation = 'Esta anotação seria gerada por um LLM local. Nesta demonstração, o conteúdo é simulado e funciona apenas como marcador.';
 
   const mockAudit = useMemo(() => {
     if (!activeStep) return null;
@@ -220,7 +209,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
     setCurrentStepIndex(idx);
     onSelectStep(nextStep);
     setSelectedAlternative(null);
-    setShowTechnicalDetails(false);
+    setShowTechnicalDetails(true);
 
     if ('speechSynthesis' in window && isSpeaking) {
       window.speechSynthesis.cancel();
@@ -254,19 +243,17 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
   const handleGraphNodeSelection = (step: TraceStep, alternative?: ForkedAlternative) => {
     const isSameStep = !!selectedStep && selectedStep.step_id === step.step_id;
-    const isSameAlternative = !!selectedAlternative && !!alternative && selectedAlternative.id === alternative.id;
 
     onSelectStep(step);
 
     if (alternative) {
-      const sameAlternative = isSameAlternative && isSameStep;
-      setSelectedAlternative(sameAlternative ? null : alternative);
-      setShowTechnicalDetails(!sameAlternative);
+      setSelectedAlternative(alternative);
+      setShowTechnicalDetails(true);
       return;
     }
 
     setSelectedAlternative(null);
-    setShowTechnicalDetails(isSameStep ? !showTechnicalDetails : true);
+    setShowTechnicalDetails(true);
   };
 
   const handleClauseJump = (idx: number) => {
@@ -553,7 +540,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
                 <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
                   <h4 className="text-[10px] uppercase tracking-[0.18em] text-indigo-700 mb-2">Explicação gerativa</h4>
-                  <p className="text-[12px] leading-relaxed text-indigo-950">{selectedAlternative ? selectedAlternative.rejection_reason : (mockAnnotation || activeStep.generative_annotation)}</p>
+                  <p className="text-[12px] leading-relaxed text-indigo-950">{mockAnnotation}</p>
                 </div>
               </div>
             </div>
