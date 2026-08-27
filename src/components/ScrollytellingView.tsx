@@ -54,8 +54,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const [selectedAlternative, setSelectedAlternative] = useState<ForkedAlternative | null>(null);
   const [expandedExcerpt, setExpandedExcerpt] = useState<boolean>(false);
   const [currentClauseIndex, setCurrentClauseIndex] = useState<number>(0);
-  const [clauseRiskFilter, setClauseRiskFilter] = useState<'ALL' | RiskLevel>('ALL');
-  const [clauseSortMode, setClauseSortMode] = useState<'index' | 'risk'>('index');
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const wheelLockRef = useRef<number>(0);
   const clauseItems = Array.isArray(trace.clauses) ? trace.clauses : [];
@@ -64,21 +62,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
     []
   );
 
-  const visibleClauseItems = useMemo(() => {
-    const filtered = clauseItems.filter((clause) => {
-      if (clauseRiskFilter === 'ALL') return true;
-      return clause.risk_level === clauseRiskFilter;
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (clauseSortMode === 'risk') {
-        const riskWeight = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-        const riskDiff = (riskWeight[b.risk_level || 'LOW'] || 0) - (riskWeight[a.risk_level || 'LOW'] || 0);
-        if (riskDiff !== 0) return riskDiff;
-      }
-      return (a.index ?? 0) - (b.index ?? 0);
-    });
-  }, [clauseItems, clauseRiskFilter, clauseSortMode]);
+  const visibleClauseItems = clauseItems;
 
   const currentClause = useMemo(() => {
     if (!visibleClauseItems.length) return null;
@@ -90,7 +74,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const currentStep = steps[currentStepIndex] || steps[0];
   const activeStep = selectedStep ?? currentStep;
 
-  const excerptText = selectedStep?.payload?.raw_clause_quote || currentClause?.text || trace.contract_excerpt || '';
+  const excerptText = currentClause?.text || trace.contract_excerpt || '';
 
   const mockAnnotation = useMemo(() => {
     if (!activeStep) return null;
@@ -469,11 +453,11 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   <span>{currentClauseIndex + 1}/{visibleClauseItems.length}</span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <button
                       type="button"
                       onClick={() => handleClauseJump(currentClauseIndex - 1)}
-                      className="h-7 w-7 rounded-md border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 disabled:opacity-40"
+                      className="h-7 w-7 shrink-0 rounded-md border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 disabled:opacity-40"
                       disabled={currentClauseIndex === 0}
                       aria-label="Cláusula anterior"
                     >
@@ -482,47 +466,21 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     <select
                       value={currentClauseIndex}
                       onChange={(event) => handleClauseJump(Number(event.target.value))}
-                      className="flex-1 rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      className="min-w-0 flex-1 rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     >
                       {visibleClauseItems.map((clause, idx) => (
-                        <option key={`${clause.index ?? idx}-${clause.title}`} value={idx}>{`${clause.index ?? idx + 1}. ${clause.title}`}</option>
+                        <option key={`${clause.index ?? idx}-${clause.title}`} value={idx}>{idx + 1}</option>
                       ))}
                     </select>
                     <button
                       type="button"
                       onClick={() => handleClauseJump(currentClauseIndex + 1)}
-                      className="h-7 w-7 rounded-md border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 disabled:opacity-40"
+                      className="h-7 w-7 shrink-0 rounded-md border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100 disabled:opacity-40"
                       disabled={currentClauseIndex >= visibleClauseItems.length - 1}
                       aria-label="Próxima cláusula"
                     >
                       <ChevronRight className="w-3.5 h-3.5 mx-auto" />
                     </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={clauseRiskFilter}
-                      onChange={(event) => {
-                        setClauseRiskFilter(event.target.value as 'ALL' | RiskLevel);
-                        setCurrentClauseIndex(0);
-                      }}
-                      className="flex-1 rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                      aria-label="Filtrar cláusulas por risco"
-                    >
-                      <option value="ALL">Todos os riscos</option>
-                      <option value="CRITICAL">Crítico</option>
-                      <option value="HIGH">Alto</option>
-                      <option value="MEDIUM">Médio</option>
-                      <option value="LOW">Baixo</option>
-                    </select>
-                    <select
-                      value={clauseSortMode}
-                      onChange={(event) => setClauseSortMode(event.target.value as 'index' | 'risk')}
-                      className="flex-1 rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                      aria-label="Ordenar cláusulas"
-                    >
-                      <option value="index">Ordenar por número</option>
-                      <option value="risk">Ordenar por risco</option>
-                    </select>
                   </div>
                 </div>
               </div>

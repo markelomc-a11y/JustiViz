@@ -117,7 +117,7 @@ export interface ContractTrace {
   };
 }
 
-export type ActiveViewMode = 'scrollytelling' | 'graph_explorer' | 'reliance_lab' | 'custom_analyzer';
+export type ActiveViewMode = 'scrollytelling' | 'reliance_lab' | 'custom_analyzer';
 
 export type ZoomLevel = 'macro' | 'micro';
 

@@ -6,7 +6,6 @@ import {
 } from '../types';
 import { 
   Scale, 
-  GitFork, 
   Compass, 
   Activity, 
   Zap, 
@@ -187,19 +186,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
-            id="tab-graph-explorer"
-            onClick={() => onSelectMode('graph_explorer')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeMode === 'graph_explorer'
-                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-xs font-bold'
-                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-            }`}
-          >
-            <GitFork className="w-3.5 h-3.5" />
-            <span>2. Grafo de Estados & Decisões</span>
-          </button>
-
-          <button
             id="tab-reliance-lab"
             onClick={() => onSelectMode('reliance_lab')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 whitespace-nowrap ${
@@ -209,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>3. Laboratório de Confiança (Reliance Lab)</span>
+            <span>2. Laboratório de Confiança (Reliance Lab)</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-bold">
               Matriz 4Q
             </span>
@@ -225,7 +211,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>4. Agente IA para Contratos Personalizados</span>
+            <span>3. Agente IA para Contratos Personalizados</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-100 text-cyan-800 font-bold">
               Modo Interativo
             </span>

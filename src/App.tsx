@@ -9,7 +9,6 @@ import { CUAD_CASE_STUDIES } from './data/cuadTraces';
 import { PT_CASE_STUDIES } from './data/ptTraces';
 import { Navbar } from './components/Navbar';
 import { ScrollytellingView } from './components/ScrollytellingView';
-import { DigraphExplorerView } from './components/DigraphExplorerView';
 import { RelianceLab } from './components/RelianceLab';
 import { CustomContractAnalyzer } from './components/CustomContractAnalyzer';
 import { HierarchicalZoomDrawer } from './components/HierarchicalZoomDrawer';
@@ -99,16 +98,6 @@ export default function App() {
             zoomLevel={zoomLevel}
             onToggleZoom={setZoomLevel}
             onOpenRelianceLab={() => setActiveMode('reliance_lab')}
-          />
-        )}
-
-        {activeMode === 'graph_explorer' && (
-          <DigraphExplorerView
-            trace={currentTrace}
-            selectedStep={selectedStep}
-            onSelectStep={setSelectedStep}
-            zoomLevel={zoomLevel}
-            onToggleZoom={setZoomLevel}
           />
         )}
 
