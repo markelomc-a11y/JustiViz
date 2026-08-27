@@ -133,22 +133,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
     return localizedNames[nodeName] || nodeName.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  const handleNarrativeHoverScroll = (event: React.WheelEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const now = Date.now();
-    if (now - wheelLockRef.current < 260) return;
-
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const nextIndex = Math.min(steps.length - 1, Math.max(0, currentStepIndex + direction));
-
-    if (nextIndex !== currentStepIndex) {
-      wheelLockRef.current = now;
-      handleStepJump(nextIndex);
-    }
-  };
-
   useEffect(() => {
     if (selectedStep) {
       const nextIndex = steps.findIndex(step => step.step_id === selectedStep.step_id);
@@ -288,6 +272,30 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
       setIsSpeaking(false);
     }
   }, [steps, onSelectStep, isSpeaking]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleNarrativeHoverScroll = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const now = Date.now();
+      if (now - wheelLockRef.current < 260) return;
+
+      const direction = event.deltaY > 0 ? 1 : -1;
+      const nextIndex = Math.min(steps.length - 1, Math.max(0, currentStepIndex + direction));
+
+      if (nextIndex !== currentStepIndex) {
+        wheelLockRef.current = now;
+        handleStepJump(nextIndex);
+      }
+    };
+
+    container.addEventListener('wheel', handleNarrativeHoverScroll, { passive: false });
+    return () => container.removeEventListener('wheel', handleNarrativeHoverScroll);
+  }, [currentStepIndex, handleStepJump, steps.length]);
 
   const handleGraphNodeSelection = (step: TraceStep, alternative?: ForkedAlternative) => {
     const isSameStep = !!selectedStep && selectedStep.step_id === step.step_id;
@@ -470,7 +478,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
         <div 
           ref={scrollContainerRef}
           className="lg:col-span-4 space-y-4"
-          onWheel={handleNarrativeHoverScroll}
           aria-label="Área de navegação por scrollytelling"
         >
           <div className="p-5 sm:p-6 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4 relative overflow-hidden transition-all duration-300">
