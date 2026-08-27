@@ -1,0 +1,11 @@
+#Project's context: academic project in multimedia engineering. Topics include generative ai, xai, machine learning, scrollytelling. The project's idea is allowing law professionals to use ai safely and to easily analyse the output for validation for more trustworthy support in human decisions based in ai, essentially in an optimized human-machine interaction in terms of user experience and ai explainability.
+#Project's Problem: Autonomous agents perform complex "Chain-of-Thought" (CoT) reasoning that is often opaque (the "black box" problem). Raw logs are not user-friendly. "Narrative Visualization" techniques can turn these execution traces into interactive stories, helping users understand and trust the agent's decisions.
+#Project's Goals (we need only achieve a few of the easiest and fastest goals, we are not aiming to achieving them all):
+1. Design a "Scrollytelling" Interface: Create a frontend where scrolling advances the "story" of the agent's reasoning process.
+2. Visualize "Forked" Decision Paths: visually represent alternative choices the agent considered and rejected, allowing users to explore "what if" scenarios.
+3. Implement Hierarchical Zoom: Allow users to view a high-level summary or zoom in to see specific API payloads and logic steps.
+4. Generative Annotations: Use a secondary LLM to generate plain-English explanations for complex technical steps within the visualization.
+5. With the guidance of supervisor: Test if narrative visualization improves the speed of debugging agent errors,different Proof of Concepts, can be explored: uncertainty
+quantification, design specification, in-context learning or finetuning, critical contexts and electrical engineering
+principles, merge of models, Test-Time active learning, tool-augmented reinforcement learning (eg. GRPO),
+evolutionary optimization methods, among others.

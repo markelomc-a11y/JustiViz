@@ -1,0 +1,6 @@
+{
+  "name": "JustiViz",
+  "description": "Narrative Visualization (Scrollytelling) for Explainable Autonomous AI Agents in Legal Contract Analysis based on the CUAD dataset and XAI principles",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
