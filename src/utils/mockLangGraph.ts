@@ -27,17 +27,17 @@ export const buildMockAnnotation = ({
   const shortExcerpt = excerpt.length > 180 ? `${excerpt.slice(0, 180)}...` : excerpt;
 
   const roleMap: Record<string, string> = {
-    extract_clauses: 'The mock LLM segmented the clause, isolated operative duties, and mapped terms to the legal taxonomy.',
-    classify_risk: 'The mock LLM classified the clause by measuring asymmetry, scope, and commercial exposure across the risk matrix.',
-    check_precedent: 'The mock LLM cross-checked the clause against benchmark precedents and commercial practice without overstating legal certainty.',
-    faithfulness_audit: 'The mock faithfulness auditor checked that the narrative is supported by the extracted facts and not inflated by speculation.',
-    verdict_synthesis: 'The mock orchestrator synthesized the final recommendation from the state-machine path while preserving explainability for legal review.',
+    extract_clauses: 'O LLM simulado segmentou a cláusula, isolou as obrigações aplicáveis e associou os termos à taxonomia jurídica.',
+    classify_risk: 'O LLM simulado classificou a cláusula medindo a assimetria, o âmbito e a exposição comercial na matriz de risco.',
+    check_precedent: 'O LLM simulado comparou a cláusula com precedentes de referência e práticas comerciais, sem exagerar a certeza jurídica.',
+    faithfulness_audit: 'O auditor de fidelidade simulado verificou se a narrativa é sustentada pelos factos extraídos e não por especulação.',
+    verdict_synthesis: 'O orquestrador simulado sintetizou a recomendação final a partir do percurso de estados, preservando a explicabilidade para revisão jurídica.',
   };
 
-  const mover = roleMap[nodeName] || 'The mock LLM translated the legal signal into a plain-language explanation for human review.';
-  const tier = riskLevel === 'CRITICAL' ? 'critical' : riskLevel === 'HIGH' ? 'high' : riskLevel === 'MEDIUM' ? 'medium' : 'low';
+  const mover = roleMap[nodeName] || 'O LLM simulado traduziu o sinal jurídico numa explicação clara para revisão humana.';
+  const tier = riskLevel === 'CRITICAL' ? 'crítico' : riskLevel === 'HIGH' ? 'elevado' : riskLevel === 'MEDIUM' ? 'moderado' : 'reduzido';
 
-  return `${mover} For ${category}, the clause excerpt “${shortExcerpt}” was evaluated as ${tier}-risk. The narrative explanation stays grounded in extracted facts and flags where a human reviewer should verify assumptions. ${summary}`;
+  return `${mover} Para ${category}, o excerto “${shortExcerpt}” foi avaliado como de risco ${tier}. A explicação mantém-se baseada nos factos extraídos e assinala os pressupostos que devem ser verificados por uma pessoa. ${summary}`;
 };
 
 export const runMockFaithfulnessAudit = ({
@@ -56,7 +56,7 @@ export const runMockFaithfulnessAudit = ({
   return {
     is_faithful: isFaithful,
     faithfulness_score: score,
-    audit_notes: `Mock LLM audit for ${nodeType}: the narrative is ${isFaithful ? 'consistent with the extracted payload' : 'partially detached from the extracted state variables'} and remains suitable for human review.`,
+    audit_notes: `Auditoria LLM simulada para ${nodeType}: a narrativa ${isFaithful ? 'é consistente com os dados extraídos' : 'está parcialmente desligada das variáveis de estado extraídas'} e continua adequada para revisão humana.`,
     hallucination_risk: risk,
   };
 };

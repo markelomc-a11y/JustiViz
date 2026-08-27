@@ -59,6 +59,10 @@ export default function App() {
 
   const currentTrace = caseStudies.find(t => t.trace_id === selectedTraceId) || caseStudies[0];
 
+  useEffect(() => {
+    setSelectedStep(null);
+  }, [selectedTraceId]);
+
   const handleAddCustomTrace = (newTrace: ContractTrace) => {
     setCaseStudies(prev => [newTrace, ...prev.filter(trace => trace.trace_id !== newTrace.trace_id)]);
     setSelectedTraceId(newTrace.trace_id);

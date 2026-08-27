@@ -80,18 +80,7 @@ export const buildTraceFromContractText = ({
   contractText: string;
   segmentList?: ClauseSegment[];
 }): ContractTrace => {
-  const isPortuguese = isPortugueseContract(category, contractText);
-
-  if (isPortuguese) {
-    return buildClauseTraceSetPt({
-      contractTitle,
-      category,
-      contractText,
-      clauseSegments: segmentList ?? [],
-    });
-  }
-
-  return buildClauseTraceSet({
+  return buildClauseTraceSetPt({
     contractTitle,
     category,
     contractText,
@@ -108,11 +97,5 @@ export const buildFallbackTrace = ({
   category: string;
   contractText: string;
 }): ContractTrace => {
-  const isPortuguese = isPortugueseContract(category, contractText);
-
-  if (isPortuguese) {
-    return generateStaticTracePt({ contractTitle, category, contractText });
-  }
-
-  return generateStaticTrace({ contractTitle, category, contractText });
+  return generateStaticTracePt({ contractTitle, category, contractText });
 };

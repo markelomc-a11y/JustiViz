@@ -62,6 +62,9 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
     });
   }, [clauseItems, clauseRiskFilter, clauseSortMode]);
 
+  const activeClause = visibleClauses[clauseIndex];
+  const activeClauseTrace = activeClause?.trace ?? trace;
+
   const handleClauseJump = (nextIndex: number) => {
     if (!visibleClauses.length) return;
     const safeIndex = Math.min(visibleClauses.length - 1, Math.max(0, nextIndex));
@@ -73,7 +76,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
     }
   };
 
-  const filteredSteps = trace.steps.filter((s) => {
+  const filteredSteps = activeClauseTrace.steps.filter((s) => {
     const matchesRisk = filterRisk === 'ALL' || s.risk_level === filterRisk;
     const matchesSearch = 
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -121,7 +124,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
                 activeTab === 'comparison_matrix' ? 'bg-white text-slate-900 font-bold shadow-xs border border-slate-200/80' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Matriz de Alternativas ({trace.steps.reduce((acc, s) => acc + (s.alternatives?.length || 0), 0)})
+              Matriz de Alternativas ({activeClauseTrace.steps.reduce((acc, s) => acc + (s.alternatives?.length || 0), 0)})
             </button>
           </div>
         </div>
@@ -247,8 +250,8 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
       {activeTab === 'canvas' ? (
         <div className="h-[680px] w-full rounded-xl overflow-hidden shadow-sm">
           <GraphCanvas
-            trace={trace}
-            currentStepIndex={trace.steps.length - 1}
+            trace={activeClauseTrace}
+            currentStepIndex={activeClauseTrace.steps.length - 1}
             selectedStep={selectedStep}
             onSelectStep={onSelectStep}
             zoomLevel={zoomLevel}

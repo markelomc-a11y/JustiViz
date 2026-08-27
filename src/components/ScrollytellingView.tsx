@@ -59,12 +59,32 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const [clauseSortMode, setClauseSortMode] = useState<'index' | 'risk'>('index');
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const wheelLockRef = useRef<number>(0);
-
   const clauseItems = Array.isArray(trace.clauses) ? trace.clauses : [];
+  const graphStatePath = useMemo(
+    () => ['extract_clauses', 'classify_risk', 'check_precedent', 'faithfulness_audit', 'verdict_synthesis'],
+    []
+  );
+
+  const visibleClauseItems = useMemo(() => {
+    const filtered = clauseItems.filter((clause) => {
+      if (clauseRiskFilter === 'ALL') return true;
+      return clause.risk_level === clauseRiskFilter;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (clauseSortMode === 'risk') {
+        const riskWeight = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+        const riskDiff = (riskWeight[b.risk_level || 'LOW'] || 0) - (riskWeight[a.risk_level || 'LOW'] || 0);
+        if (riskDiff !== 0) return riskDiff;
+      }
+      return (a.index ?? 0) - (b.index ?? 0);
+    });
+  }, [clauseItems, clauseRiskFilter, clauseSortMode]);
+
   const currentClause = useMemo(() => {
-    if (!clauseItems.length) return null;
-    return clauseItems[currentClauseIndex] ?? clauseItems[0] ?? null;
-  }, [clauseItems, currentClauseIndex]);
+    if (!visibleClauseItems.length) return null;
+    return visibleClauseItems[currentClauseIndex] ?? visibleClauseItems[0] ?? null;
+  }, [visibleClauseItems, currentClauseIndex]);
 
   const activeClauseTrace = currentClause?.trace ?? trace;
   const steps = activeClauseTrace.steps || trace.steps || [];
@@ -72,11 +92,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const activeStep = selectedStep ?? currentStep;
 
   const excerptText = selectedStep?.payload?.raw_clause_quote || currentClause?.text || trace.contract_excerpt || '';
-
-  const graphStatePath = useMemo(
-    () => ['extract_clauses', 'classify_risk', 'check_precedent', 'faithfulness_audit', 'verdict_synthesis'],
-    []
-  );
 
   const mockAnnotation = useMemo(() => {
     if (!activeStep) return null;
@@ -100,22 +115,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
       nodeType: activeStep.type,
     });
   }, [activeStep]);
-
-  const visibleClauseItems = useMemo(() => {
-    const filtered = clauseItems.filter((clause) => {
-      if (clauseRiskFilter === 'ALL') return true;
-      return clause.risk_level === clauseRiskFilter;
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (clauseSortMode === 'risk') {
-        const riskWeight = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-        const riskDiff = (riskWeight[b.risk_level || 'LOW'] || 0) - (riskWeight[a.risk_level || 'LOW'] || 0);
-        if (riskDiff !== 0) return riskDiff;
-      }
-      return (a.index ?? 0) - (b.index ?? 0);
-    });
-  }, [clauseItems, clauseRiskFilter, clauseSortMode]);
 
   const isLongExcerpt = excerptText.length > 220;
   const currentClauseTitle = currentClause ? `${trace.contract_title} - Cláusula ${currentClause.index ?? currentClauseIndex + 1}` : trace.contract_title;
@@ -148,20 +147,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
       wheelLockRef.current = now;
       handleStepJump(nextIndex);
     }
-  };
-
-  const lockNarrativeScroll = (shouldLock: boolean) => {
-    const root = document.body;
-    const html = document.documentElement;
-
-    if (shouldLock) {
-      root.style.overflow = 'hidden';
-      html.style.overflow = 'hidden';
-      return;
-    }
-
-    root.style.overflow = '';
-    html.style.overflow = '';
   };
 
   useEffect(() => {
@@ -200,10 +185,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   useEffect(() => {
     setExpandedExcerpt(false);
   }, [selectedStep, selectedAlternative]);
-
-  useEffect(() => {
-    return () => lockNarrativeScroll(false);
-  }, []);
 
   useEffect(() => {
     if (!steps.length) {
@@ -333,6 +314,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
     if (!nextStep) return;
 
     setCurrentClauseIndex(safeIndex);
+    setCurrentStepIndex(0);
     setSelectedAlternative(null);
     setShowTechnicalDetails(true);
     onSelectStep(nextStep);
@@ -489,8 +471,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
           ref={scrollContainerRef}
           className="lg:col-span-4 space-y-4"
           onWheel={handleNarrativeHoverScroll}
-          onMouseEnter={() => lockNarrativeScroll(true)}
-          onMouseLeave={() => lockNarrativeScroll(false)}
           aria-label="Área de navegação por scrollytelling"
         >
           <div className="p-5 sm:p-6 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4 relative overflow-hidden transition-all duration-300">
@@ -605,7 +585,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
         {/* Middle Column: Interactive D3 Directed Graph Canvas */}
         <div className={selectedStep ? 'lg:col-span-5 h-[620px] sticky top-24' : 'lg:col-span-7 h-[620px] sticky top-24'}>
           <GraphCanvas
-            trace={trace}
+            trace={activeClauseTrace}
             currentStepIndex={currentStepIndex}
             selectedStep={selectedStep}
             onSelectStep={handleGraphNodeSelection}
@@ -691,7 +671,6 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                       </div>
                     )
                   )}
-
                   <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Métricas</p>
                     <div className="flex items-center justify-between">
@@ -709,12 +688,12 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   </div>
 
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Mock faithfulness audit</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Auditoria de fidelidade simulada</p>
                     <p className="text-[11px] leading-relaxed text-slate-700">
                       {(mockAudit?.audit_notes ?? activeStep.faithfulness_metadata.audit_notes)}
                     </p>
                     <div className="flex items-center justify-between text-[11px] text-slate-700">
-                      <span>Hallucination risk</span>
+                      <span>Risco de alucinação</span>
                       <strong className="uppercase">{(mockAudit?.hallucination_risk ?? activeStep.faithfulness_metadata.hallucination_risk)}</strong>
                     </div>
                   </div>

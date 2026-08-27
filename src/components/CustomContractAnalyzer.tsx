@@ -33,9 +33,9 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
   const [contractTitle, setContractTitle] = useState<string>('Acordo de Prestação de Serviços Empresariais');
   const [category, setCategory] = useState<string>('DL 446/85 (LCCG) • Indemnização e Responsabilidade');
   const [contractText, setContractText] = useState<string>(
-    `SECTION 12. INDEMNITY AND LIMITATION OF REMEDIES.
-12.1 Provider shall defend, indemnify, and hold harmless Customer against any third-party claim alleging that the Cloud Services infringe any patent, copyright, or trademark.
-12.2 Carve-out. The liability limitations in Section 13 shall NOT apply to Provider's indemnification obligations, and Provider's financial exposure under Section 12.1 shall be strictly UNLIMITED in amount and duration.`
+    `CLÁUSULA 12.ª — INDEMNIZAÇÃO E LIMITAÇÃO DE REMÉDIOS.
+  12.1 O Prestador defenderá e indemnizará o Cliente contra qualquer reclamação de terceiros que alegue que os Serviços Cloud violam uma patente, direito de autor ou marca.
+  12.2 Exceção. As limitações de responsabilidade da Cláusula 13.ª NÃO se aplicam às obrigações de indemnização do Prestador, e a sua exposição financeira ao abrigo da Cláusula 12.1 é estritamente ILIMITADA em valor e duração.`
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
       setClauses(nextClauses);
       return nextClauses;
     } catch (error) {
-      console.warn('Clause segmentation unavailable:', error);
+      console.warn('Segmentação de cláusulas indisponível:', error);
       return [];
     }
   };
@@ -103,7 +103,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
       const extractedText = await parseUploadedFile(selectedFile);
 
       if (!extractedText.trim()) {
-        throw new Error('The uploaded file did not contain readable text.');
+        throw new Error('O ficheiro carregado não contém texto legível.');
       }
 
       const fileStem = selectedFile.name.replace(/\.[^.]+$/, '');
@@ -209,11 +209,11 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
         const payload = await response.json();
         const trace = payload?.data ?? payload;
         if (!trace || !trace.steps || !trace.final_verdict) {
-          throw new Error('The AI response was invalid or incomplete.');
+          throw new Error('A resposta da IA é inválida ou está incompleta.');
         }
 
         const nextClauses = await segmentContractText(contractText);
-        const enrichedTrace = applyClauseTracePipeline(trace, nextClauses && nextClauses.length > 0 ? nextClauses : [{ index: 0, title: 'Main Clause', text: contractText }]);
+        const enrichedTrace = applyClauseTracePipeline(trace, nextClauses && nextClauses.length > 0 ? nextClauses : [{ index: 0, title: 'Cláusula principal', text: contractText }]);
 
         setLastGeneratedTrace(enrichedTrace);
         onAddCustomTrace(enrichedTrace);
@@ -236,7 +236,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
       onAddCustomTrace(fullTrace);
     } catch (err: any) {
       console.error(err);
-      setErrorMessage(err.message || 'Error compiling static trace representation');
+      setErrorMessage(err.message || 'Erro ao compilar a representação estática do rasto.');
 
       const fullTrace = buildFallbackTrace({
         contractTitle,
@@ -345,7 +345,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
                   className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  Upload .txt / .docx / .pdf
+                  Carregar .txt / .docx / .pdf
                 </button>
               </div>
             </div>
