@@ -114,6 +114,15 @@ def annotation(node: str, summary: str, text: str, fallback: str) -> str:
     return response or fallback
 
 
+def explain_step(node: str, summary: str, text: str, evidence: str = "") -> dict[str, Any]:
+    fallback = summary
+    response = groq_call(
+        "És um explicador jurídico conciso. Responde em português europeu, em duas frases, sem aconselhamento jurídico.",
+        f"Explica de forma acessível o raciocínio deste passo de análise.\nEstado: {node}\nResumo: {summary}\nEvidência: {evidence[:1200]}\nTexto: {text[:1200]}",
+    )
+    return {"explanation": response or fallback, "generated_by": "groq" if response else "local-fallback"}
+
+
 def make_step(node: str, title: str, summary: str, risk: str, phase: int, payload: dict[str, Any], alternatives: list[dict[str, Any]], annotation: str, faithfulness: dict[str, Any]) -> dict[str, Any]:
     return {"step_id": f"py-langgraph-{node}-{phase}", "node_name": node, "type": "decision" if node == "classify_risk" else "audit" if node == "faithfulness_audit" else "synthesis" if node == "verdict_synthesis" else "extraction" if node == "extract_clauses" else "precedent", "title": title, "summary": summary, "generative_annotation": annotation, "risk_level": risk, "scroll_phase": phase, "payload": payload, "alternatives": alternatives, "faithfulness_metadata": faithfulness, "execution_time_ms": 0, "is_critical_node": node in ("classify_risk", "verdict_synthesis")}
 
@@ -201,6 +210,8 @@ class Handler(BaseHTTPRequestHandler):
         payload = json.loads(self.rfile.read(length) or b"{}")
         if self.path == "/analyze":
             self.respond(200, analyze(payload))
+        elif self.path == "/explain":
+            self.respond(200, explain_step(payload.get("node", ""), payload.get("summary", ""), payload.get("text", ""), payload.get("evidence", "")))
         elif self.path == "/audit":
             summary = payload.get("summary", "")
             self.respond(200, audit(summary, json.dumps(payload.get("technicalPayload", {}))))

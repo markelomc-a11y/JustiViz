@@ -75,7 +75,8 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
   const excerptText = currentClause?.text || trace.contract_excerpt || '';
 
-  const mockAnnotation = 'Esta anotação seria gerada por um LLM local. Nesta demonstração, o conteúdo é simulado e funciona apenas como marcador.';
+  const [generatedExplanation, setGeneratedExplanation] = useState<string>('A carregar explicação gerativa...');
+  const [explanationSource, setExplanationSource] = useState<'groq' | 'local-fallback'>('local-fallback');
 
   const mockAudit = activeStep?.faithfulness_metadata;
 
@@ -132,6 +133,42 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   useEffect(() => {
     setExpandedExcerpt(false);
   }, [selectedStep, selectedAlternative]);
+
+  useEffect(() => {
+    if (!activeStep) return;
+    const controller = new AbortController();
+    setGeneratedExplanation('A gerar explicação...');
+    setExplanationSource('local-fallback');
+
+    fetch('/api/generate-explanation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        node: activeStep.node_name,
+        summary: activeStep.summary,
+        text: excerptText,
+        evidence: activeStep.payload?.raw_clause_quote || '',
+      }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Explanation service unavailable');
+        return response.json();
+      })
+      .then((payload) => {
+        if (controller.signal.aborted) return;
+        setGeneratedExplanation(payload.explanation || activeStep.generative_annotation);
+        setExplanationSource(payload.generated_by === 'groq' ? 'groq' : 'local-fallback');
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setGeneratedExplanation(activeStep.generative_annotation);
+          setExplanationSource('local-fallback');
+        }
+      });
+
+    return () => controller.abort();
+  }, [activeStep, excerptText]);
 
   // Audio speech narration using Web Speech API (with pt-PT European Portuguese detection)
   const handleToggleSpeech = () => {
@@ -533,8 +570,13 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 </div>
 
                 <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
-                  <h4 className="text-[10px] uppercase tracking-[0.18em] text-indigo-700 mb-2">Explicação gerativa</h4>
-                  <p className="text-[12px] leading-relaxed text-indigo-950">{mockAnnotation}</p>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h4 className="text-[10px] uppercase tracking-[0.18em] text-indigo-700">Explicação gerativa</h4>
+                    <span className="text-[9px] uppercase tracking-wider text-indigo-600">
+                      {explanationSource === 'groq' ? 'Groq' : 'Anotação do trace'}
+                    </span>
+                  </div>
+                  <p className="text-[12px] leading-relaxed text-indigo-950">{generatedExplanation}</p>
                 </div>
               </div>
             </div>

@@ -10,6 +10,7 @@ const app = express();
 const PORT = 3000;
 const LANGGRAPH_PORT = Number(process.env.LANGGRAPH_PORT || 8001);
 let langGraphProcess: ChildProcess | null = null;
+let langGraphStartupError: string | null = null;
 
 app.use(express.json({ limit: "10mb" }));
 
@@ -20,18 +21,50 @@ function startLangGraphService() {
     stdio: ["ignore", "pipe", "pipe"],
   });
   langGraphProcess.stderr?.on("data", (chunk) => console.error(`[LangGraph] ${chunk.toString().trim()}`));
-  langGraphProcess.on("error", (error) => console.error("Could not start LangGraph service:", error));
+  langGraphProcess.on("error", (error) => {
+    langGraphStartupError = error.message;
+    console.error("Could not start LangGraph service:", error);
+  });
+  langGraphProcess.on("exit", (code, signal) => {
+    if (code !== 0) {
+      langGraphStartupError = `process exited with ${signal ? `signal ${signal}` : `code ${code}`}`;
+    }
+  });
+}
+
+async function waitForLangGraphService() {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (langGraphProcess?.exitCode !== null || langGraphStartupError) break;
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${LANGGRAPH_PORT}/health`, {
+        signal: AbortSignal.timeout(250),
+      });
+      if (response.ok) return true;
+    } catch {
+      // The child process may need a moment to import LangGraph and load the corpus.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+
+  return false;
 }
 
 async function callLangGraph(pathname: string, payload?: unknown) {
-  const response = await fetch(`http://127.0.0.1:${LANGGRAPH_PORT}${pathname}`, {
-    method: payload === undefined ? "GET" : "POST",
-    headers: payload === undefined ? undefined : { "Content-Type": "application/json" },
-    body: payload === undefined ? undefined : JSON.stringify(payload),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.error || "LangGraph service request failed");
-  return data;
+  try {
+    const response = await fetch(`http://127.0.0.1:${LANGGRAPH_PORT}${pathname}`, {
+      method: payload === undefined ? "GET" : "POST",
+      headers: payload === undefined ? undefined : { "Content-Type": "application/json" },
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || "LangGraph service request failed");
+    return data;
+  } catch (error: any) {
+    const reason = langGraphStartupError || error.message || "unknown connection error";
+    throw new Error(`LangGraph service unavailable: ${reason}. Install requirements.txt and restart npm run dev.`);
+  }
 }
 
 // Health check
@@ -100,6 +133,20 @@ app.post("/api/analyze-contract", async (req, res) => {
   }
 });
 
+app.post("/api/generate-explanation", async (req, res) => {
+  try {
+    const { node, summary, text, evidence } = req.body || {};
+    if (!summary || typeof summary !== "string") {
+      return res.status(400).json({ error: "summary is required" });
+    }
+
+    const explanation = await callLangGraph("/explain", { node, summary, text, evidence });
+    return res.json(explanation);
+  } catch (error: any) {
+    return res.status(503).json({ error: error.message || "Failed to generate explanation" });
+  }
+});
+
 // Proxy faithfulness audit requests to the Python LangGraph service.
 app.post("/api/audit-faithfulness", async (req, res) => {
   try {
@@ -126,6 +173,10 @@ app.post("/api/audit-faithfulness", async (req, res) => {
 // Setup Vite middleware or static serving
 async function startServer() {
   startLangGraphService();
+  const langGraphReady = await waitForLangGraphService();
+  if (!langGraphReady) {
+    console.warn("LangGraph service is unavailable; the frontend will use its offline fallback.");
+  }
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
