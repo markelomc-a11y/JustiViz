@@ -1,0 +1,89 @@
+{
+  "measured_at": "2026-08-28T13:53:39.612Z",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Safari/537.36",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "trace_id": "pt-eurlex-001",
+  "trace_step_count": 5,
+  "scroll_steps": 60,
+  "duration_ms": 14140.400000000001,
+  "fps": {
+    "min": 59.99803285138187,
+    "average": 60.11171694139532,
+    "max": 61.53846153846153
+  },
+  "samples": [
+    {
+      "elapsedMs": 1007.5,
+      "frameCount": 62,
+      "fps": 61.53846153846153
+    },
+    {
+      "elapsedMs": 1000,
+      "frameCount": 60,
+      "fps": 60
+    },
+    {
+      "elapsedMs": 1000,
+      "frameCount": 60,
+      "fps": 60
+    },
+    {
+      "elapsedMs": 1016.6000000000004,
+      "frameCount": 61,
+      "fps": 60.003934684241564
+    },
+    {
+      "elapsedMs": 1016.6000000000004,
+      "frameCount": 61,
+      "fps": 60.003934684241564
+    },
+    {
+      "elapsedMs": 1016.5999999999985,
+      "frameCount": 61,
+      "fps": 60.00393468424167
+    },
+    {
+      "elapsedMs": 1000,
+      "frameCount": 60,
+      "fps": 60
+    },
+    {
+      "elapsedMs": 1016.6000000000004,
+      "frameCount": 61,
+      "fps": 60.003934684241564
+    },
+    {
+      "elapsedMs": 1016.7000000000007,
+      "frameCount": 61,
+      "fps": 59.99803285138187
+    },
+    {
+      "elapsedMs": 1016.6000000000004,
+      "frameCount": 61,
+      "fps": 60.003934684241564
+    },
+    {
+      "elapsedMs": 1000,
+      "frameCount": 60,
+      "fps": 60
+    },
+    {
+      "elapsedMs": 1016.5999999999985,
+      "frameCount": 61,
+      "fps": 60.00393468424167
+    },
+    {
+      "elapsedMs": 1016.6000000000022,
+      "frameCount": 61,
+      "fps": 60.003934684241464
+    },
+    {
+      "elapsedMs": 1000,
+      "frameCount": 60,
+      "fps": 60
+    }
+  ]
+}

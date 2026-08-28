@@ -18,7 +18,8 @@ import {
   GitFork, 
   Zap,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Download
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -36,27 +37,46 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
   const [timerRunning, setTimerRunning] = useState<boolean>(true);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [userDecision, setUserDecision] = useState<'ACCEPT' | 'REJECT_ERROR' | null>(null);
-  const [records, setRecords] = useState<RelianceUserRecord[]>([
-    {
-      contract_id: 'cuad-trace-001',
-      user_action: 'ACCEPT',
-      agent_is_correct: true,
-      time_to_decide_ms: 12400,
-      mode_used: 'scrollytelling',
-      outcome: 'APPROPRIATE_RELIANCE',
-    },
-    {
-      contract_id: 'cuad-trace-002',
-      user_action: 'ACCEPT',
-      agent_is_correct: true,
-      time_to_decide_ms: 15200,
-      mode_used: 'scrollytelling',
-      outcome: 'APPROPRIATE_RELIANCE',
-    },
-  ]);
+  const [participantRole, setParticipantRole] = useState<string>(() =>
+    window.localStorage.getItem('justiviz-reliance-participant') || 'estudante'
+  );
+  const [records, setRecords] = useState<RelianceUserRecord[]>(() => {
+    const savedRecords = window.localStorage.getItem('justiviz-reliance-records');
+    if (!savedRecords) return [];
+
+    try {
+      return JSON.parse(savedRecords) as RelianceUserRecord[];
+    } catch {
+      return [];
+    }
+  });
 
   const activeCase = caseStudies.find(c => c.trace_id === selectedCaseId) || caseStudies[0];
   const agentIsCorrect = !activeCase.reliance_profile?.injected_error_present;
+
+  useEffect(() => {
+    window.localStorage.setItem('justiviz-reliance-records', JSON.stringify(records));
+  }, [records]);
+
+  useEffect(() => {
+    window.localStorage.setItem('justiviz-reliance-participant', participantRole);
+  }, [participantRole]);
+
+  const handleExportRecords = () => {
+    const report = {
+      participant_role: participantRole,
+      exported_at: new Date().toISOString(),
+      record_count: records.length,
+      records,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `justiviz-reliance-${participantRole}-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
+  };
 
   // Timer counter
   useEffect(() => {
@@ -138,10 +158,35 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
             </p>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-center shrink-0 min-w-[140px]">
-            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Confiança Apropriada</span>
-            <span className="text-2xl font-bold text-emerald-700 font-mono">{overallAppropriateScore}%</span>
-            <span className="text-[10px] text-slate-500 block">({records.length} avaliações registadas)</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-center min-w-[140px]">
+              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Confiança Apropriada</span>
+              <span className="text-2xl font-bold text-emerald-700 font-mono">{overallAppropriateScore}%</span>
+              <span className="text-[10px] text-slate-500 block">({records.length} avaliações registadas)</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider" htmlFor="reliance-participant-role">
+                Participante
+              </label>
+              <select
+                id="reliance-participant-role"
+                value={participantRole}
+                onChange={(event) => setParticipantRole(event.target.value)}
+                className="text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5"
+              >
+                <option value="estudante">Estudante</option>
+                <option value="orientador">Orientador</option>
+                <option value="profissional-direito">Profissional de Direito</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleExportRecords}
+                className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1.5 flex items-center justify-center gap-1.5 hover:bg-indigo-100"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Exportar JSON
+              </button>
+            </div>
           </div>
         </div>
       </div>
