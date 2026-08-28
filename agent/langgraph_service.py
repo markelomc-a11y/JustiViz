@@ -15,6 +15,7 @@ import sys
 import threading
 import time
 import urllib.request
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from html.parser import HTMLParser
 from pathlib import Path
@@ -231,6 +232,13 @@ def groq_call(system: str, prompt: str) -> str | None:
         with urllib.request.urlopen(request, timeout=25) as response:
             body = json.loads(response.read().decode())
         return body["choices"][0]["message"]["content"].strip()
+    except urllib.error.HTTPError as error:
+        try:
+            details = error.read().decode("utf-8", errors="replace")[:500]
+        except Exception:
+            details = "no response body"
+        print(f"Groq request unavailable: HTTP {error.code}: {details}", file=sys.stderr)
+        return None
     except Exception as error:
         print(f"Groq request unavailable: {error}", file=sys.stderr)
         return None
