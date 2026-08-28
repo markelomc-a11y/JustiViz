@@ -17,6 +17,7 @@ import {
   Play,
   RotateCcw
 } from 'lucide-react';
+import { getTraceProvenanceLabel } from '../utils/dataProvenance';
 
 interface NavbarProps {
   activeMode: ActiveViewMode;
@@ -89,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {caseStudies.map((cs) => (
                 <option key={cs.trace_id} value={cs.trace_id}>
                   {cs.reliance_profile?.injected_error_present ? '⚠️ ' : '📋 '}
-                  {cs.contract_title.split(' - ')[0]} ({cs.cuad_master_category.slice(0, 24)}...)
+                  {cs.contract_title.split(' - ')[0]} [{getTraceProvenanceLabel(cs)}]
                 </option>
               ))}
             </select>

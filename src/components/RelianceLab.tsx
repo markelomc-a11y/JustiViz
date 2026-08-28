@@ -22,6 +22,7 @@ import {
   Download
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { getTraceProvenanceLabel } from '../utils/dataProvenance';
 
 interface RelianceLabProps {
   caseStudies: ContractTrace[];
@@ -153,6 +154,9 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               Laboratório de Calibração de Confiança (Appropriate Reliance Lab)
             </h1>
+            <p className="text-[11px] font-semibold text-slate-600 mt-1">
+              Caso selecionado: {getTraceProvenanceLabel(activeCase)}
+            </p>
             <p className="text-xs sm:text-sm text-slate-600 max-w-3xl mt-1">
               O objetivo da XAI não é a confiança cega, mas sim a <strong>Confiança Calibrada (Appropriate Reliance)</strong>: confiar no agente quando este está correto, e detetar e anular rapidamente erros quando a IA alucina ou comete uma falha lógica.
             </p>

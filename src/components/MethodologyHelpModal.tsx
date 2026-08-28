@@ -72,7 +72,7 @@ export const MethodologyHelpModal: React.FC<MethodologyHelpModalProps> = ({
               <Scale className="w-3.5 h-3.5 text-indigo-600" /> Enquadramento em Direito Português & Alternativas ao CUAD
             </h3>
             <p className="text-xs text-indigo-950 leading-relaxed">
-              Enquanto o benchmark norte-americano <strong>CUAD</strong> reflete contratos submetidos à SEC sob a lei de Delaware/Nova Iorque, o <strong>JustiViz</strong> integra os referenciais fundamentais de Direito Português e Europeu:
+              Enquanto o benchmark norte-americano <strong>CUAD</strong> reflete contratos submetidos à SEC sob a lei de Delaware/Nova Iorque, o <strong>JustiViz</strong> usa os referenciais fundamentais de Direito Português e Europeu. Os casos portugueses apresentados na demonstração são fixtures simuladas, não registos extraídos desses portais:
             </p>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-indigo-950 pt-1">
               <li className="p-2 rounded-lg bg-white/80 border border-indigo-100">
@@ -149,7 +149,7 @@ export const MethodologyHelpModal: React.FC<MethodologyHelpModalProps> = ({
 
         {/* Modal Footer */}
         <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
-          <span className="font-medium">Datasets CUAD / Eur-Lex PT • Orquestração LangGraph • React + D3.js 60 FPS</span>
+          <span className="font-medium">CUAD real • Casos PT demonstrativos simulados • Orquestração LangGraph • React + D3.js 60 FPS</span>
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors cursor-pointer shadow-xs"

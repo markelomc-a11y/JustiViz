@@ -6,6 +6,7 @@ import {
   RiskLevel 
 } from '../types';
 import { GraphCanvas } from './GraphCanvas';
+import { getTraceProvenanceLabel } from '../utils/dataProvenance';
 import { 
   GitFork, 
   Filter, 
@@ -98,6 +99,9 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
               </span>
               <span className="text-xs text-slate-500 font-medium">
                 {trace.contract_title.split(' - ')[0]}
+              </span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                {getTraceProvenanceLabel(trace)}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">

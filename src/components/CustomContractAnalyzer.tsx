@@ -196,8 +196,15 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
           throw new Error('A resposta da IA é inválida ou está incompleta.');
         }
 
-        setLastGeneratedTrace(trace);
-        onAddCustomTrace(trace);
+        const liveTrace: ContractTrace = {
+          ...trace,
+          metadata: {
+            ...trace.metadata,
+            data_provenance: 'live-analysis',
+          },
+        };
+        setLastGeneratedTrace(liveTrace);
+        onAddCustomTrace(liveTrace);
         setStatusMessage('A análise em tempo real está ativa e o rasto personalizado foi adicionado.');
         return;
       }
@@ -264,7 +271,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
           
           {/* Quick Presets */}
           <div className="space-y-1.5">
-            <span className="text-xs font-semibold text-slate-500">Carregar Exemplo Pré-definido:</span>
+              <span className="text-xs font-semibold text-slate-500">Carregar Exemplo Pré-definido (simulado):</span>
             <div className="flex flex-wrap gap-2">
               {samplePresets.map((p, idx) => (
                 <button
@@ -452,6 +459,9 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
                   {lastGeneratedTrace.steps.length} Passos Gerados
                 </span>
               </div>
+              <p className="text-[11px] font-semibold text-slate-600">
+                {lastGeneratedTrace.metadata?.data_provenance === 'live-analysis' ? 'Análise baseada no documento submetido e gerada pelo serviço de IA.' : 'Análise baseada no documento submetido; resultados locais simulados.'}
+              </p>
 
               <div>
                 <h3 className="text-base font-bold text-slate-900">

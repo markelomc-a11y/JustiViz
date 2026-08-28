@@ -1,6 +1,6 @@
 import { ContractTrace } from '../types';
 
-export const PT_CASE_STUDIES: ContractTrace[] = [
+export const PT_CASE_STUDIES: ContractTrace[] = ([
   {
     trace_id: 'pt-eurlex-001',
     contract_title: 'Contrato de Prestação de Serviços Cloud & Infraestrutura Crítica (PT/UE)',
@@ -638,4 +638,14 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
       error_step_id: 'pt-step-003-2',
     },
   },
-];
+] as ContractTrace[]).map((trace) => ({
+  ...trace,
+  metadata: {
+    ...trace.metadata,
+    created_at: trace.metadata?.created_at || '2025-01-01',
+    model_orchestrator: trace.metadata?.model_orchestrator || 'fixture-case-study',
+    secondary_auditor_model: trace.metadata?.secondary_auditor_model || 'fixture-audit',
+    cuad_version: trace.metadata?.cuad_version || 'fixture',
+    data_provenance: 'fixture' as const,
+  },
+}));

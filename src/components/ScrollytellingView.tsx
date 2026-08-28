@@ -7,6 +7,7 @@ import {
   ForkedAlternative
 } from '../types';
 import { GraphCanvas } from './GraphCanvas';
+import { getTraceProvenanceLabel } from '../utils/dataProvenance';
 import { 
   Play, 
   Pause, 
@@ -342,6 +343,9 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
               <span className="text-xs font-medium text-slate-500">
                 Legislação Aplicável: <strong className="text-slate-800">{trace.governing_law}</strong>
               </span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                {getTraceProvenanceLabel(trace)}
+              </span>
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
               {trace.contract_title}
@@ -375,7 +379,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-700">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Estado simulado do LangGraph</span>
+              <span>Representação do estado do LangGraph</span>
             </div>
             <span className="text-[10px] text-indigo-700">
               ativo: <strong>{activeStep?.node_name || 'extract_clauses'}</strong>
@@ -647,7 +651,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   </div>
 
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Auditoria de fidelidade simulada</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Auditoria de fidelidade ({getTraceProvenanceLabel(trace).toLowerCase()})</p>
                     <p className="text-[11px] leading-relaxed text-slate-700">
                       {(mockAudit?.audit_notes ?? activeStep.faithfulness_metadata.audit_notes)}
                     </p>

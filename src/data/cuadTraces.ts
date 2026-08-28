@@ -89,7 +89,7 @@ export function extractCuadSubset(examples: CuadAnnotatedExample[] = CUAD_ANNOTA
       steps: [step],
       final_verdict: verdict,
       clauses: [{ index: 1, title: example.category, text: example.answer, risk_level: step.risk_level, trace: undefined }],
-      metadata: { created_at: '2021-03-11', model_orchestrator: 'CUADv1 extraction', secondary_auditor_model: 'none', cuad_version: 'CUADv1' },
+      metadata: { created_at: '2021-03-11', model_orchestrator: 'CUADv1 extraction', secondary_auditor_model: 'none', cuad_version: 'CUADv1', data_provenance: 'corpus' },
     };
   });
 }

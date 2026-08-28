@@ -402,6 +402,7 @@ export function buildClauseTraceSetPt({
         model_orchestrator: 'local-clause-pipeline',
         secondary_auditor_model: 'local-faithfulness-audit',
         cuad_version: 'v1.0-local',
+        data_provenance: 'local-analysis',
       },
       final_verdict: {
         ...clauseTrace.final_verdict,

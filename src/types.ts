@@ -114,8 +114,11 @@ export interface ContractTrace {
     model_orchestrator: string;
     secondary_auditor_model: string;
     cuad_version: string;
+    data_provenance?: TraceDataProvenance;
   };
 }
+
+export type TraceDataProvenance = 'corpus' | 'fixture' | 'user-input' | 'live-analysis' | 'local-analysis';
 
 export type ActiveViewMode = 'scrollytelling' | 'reliance_lab' | 'custom_analyzer';
 
