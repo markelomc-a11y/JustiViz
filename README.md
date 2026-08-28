@@ -138,6 +138,21 @@ npm run dev
 
 O servidor é iniciado na porta `3000`. A aplicação fica normalmente disponível em `http://localhost:3000`.
 
+Se a porta estiver ocupada, altere-a no PowerShell antes de iniciar:
+
+```powershell
+$env:PORT = "3002"
+$env:VITE_HMR_PORT = "3003"
+npm run dev
+```
+
+Também é possível desativar o WebSocket de hot reload se a porta HMR estiver ocupada:
+
+```powershell
+$env:DISABLE_HMR = "true"
+npm run dev
+```
+
 O Express inicia o serviço Python LangGraph em `127.0.0.1:8001` e funciona como proxy para a interface. A chave opcional da Groq deve ser definida no ficheiro `.env` através de `GROQ_API_KEY`; não deve ser colocada no código nem no frontend. Sem a chave, o LangGraph continua a executar, usando validação local para as tarefas secundárias.
 
 ## Scripts disponíveis

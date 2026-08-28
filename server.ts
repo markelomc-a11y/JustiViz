@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 const LANGGRAPH_PORT = Number(process.env.LANGGRAPH_PORT || 8001);
 let langGraphProcess: ChildProcess | null = null;
 let langGraphStartupError: string | null = null;
@@ -208,7 +208,12 @@ async function startServer() {
   }
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: process.env.DISABLE_HMR === "true"
+          ? false
+          : { port: Number(process.env.VITE_HMR_PORT || PORT + 1) },
+      },
       appType: "spa",
     });
     app.use(vite.middlewares);
@@ -220,8 +225,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`JustiViz Server running on http://localhost:${PORT}`);
+  });
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code === "EADDRINUSE") {
+      console.error(`Port ${PORT} is already in use. Stop the existing process or run with another port, for example: PORT=${PORT + 1} npm run dev`);
+      process.exitCode = 1;
+      langGraphProcess?.kill();
+      return;
+    }
+    console.error("Could not start JustiViz server:", error);
+    process.exitCode = 1;
+    langGraphProcess?.kill();
   });
 }
 
