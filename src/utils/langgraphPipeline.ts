@@ -7,6 +7,7 @@ import type {
   TraceStep,
 } from '../types';
 import { buildMockAnnotation, runMockFaithfulnessAudit } from './mockLangGraph';
+import { classifyAgainstCuad } from './cuadClassifier';
 
 export type LangGraphNodeName =
   | 'extract_clauses'
@@ -159,23 +160,10 @@ const createWorkflow = () => {
 
   workflow.addNode('classify_risk', (state: any) => {
     const text = (state.contractText ?? '').trim();
-    const lowerText = text.toLowerCase();
-    const isUnlimited = /unlimited|without any limit|shall not apply|uncapped|no cap/i.test(text);
-    const isIndemnity = /indemn|hold harmless|liability|remedy|risk/i.test(text);
-    const isNonCompete = /non[- ]?compete|restrictive covenant|competition|exclusive/i.test(text);
-    const isTermination = /termination|terminate|convenience|cancel/i.test(text);
-    const isDataBreach = /data breach|rgpd|gdpr|personal data|privacy/i.test(text);
-    const riskScore = isUnlimited ? 94 : isIndemnity ? 82 : isNonCompete ? 72 : isTermination ? 58 : isDataBreach ? 68 : 49;
+    const classificationResult = classifyAgainstCuad(text);
+    const riskScore = classificationResult.score;
     const riskLevel = toRiskLevel(riskScore);
-    const classification = isUnlimited
-      ? 'Critical Risk: asymmetric uncapped exposure and onerous restriction'
-      : isIndemnity
-        ? 'High Risk: one-sided commercial exposure'
-        : isNonCompete
-          ? 'Moderate Risk: restraint of trade with commercial impact'
-          : isTermination
-            ? 'Moderate Risk: termination asymmetry'
-            : 'Low Risk: conventional commercial terms';
+    const classification = `${riskLevel} CUAD match: ${classificationResult.category}`;
 
     const traceId = buildBasicTraceId(state.contractTitle || 'contract');
     const step = createStep({
@@ -189,15 +177,15 @@ const createWorkflow = () => {
       category: state.category,
       contractText: text,
       payload: {
-        cuad_category_matched: state.category,
-        confidence_metric: 0.96,
-        statutory_basis: 'Commercial risk allocation benchmark + legal drafting analysis',
-        raw_clause_quote: text.length > 200 ? `${text.slice(0, 200)}...` : text,
+        cuad_category_matched: classificationResult.category,
+        confidence_metric: classificationResult.similarity,
+        statutory_basis: 'CUADv1 annotated-answer retrieval',
+        raw_clause_quote: classificationResult.matchedEvidence || (text.length > 200 ? `${text.slice(0, 200)}...` : text),
         state_variables: {
-          exposure_magnitude: isUnlimited ? 'UNBOUNDED' : 'CONTROLLED',
-          imbalance_flag: isIndemnity ? 'HIGH' : 'MODERATE',
+          corpus_similarity: classificationResult.similarity,
+          source_document: classificationResult.sourceDocument,
+          answer_start: classificationResult.answerStart,
           jurisdictional_risk: riskLevel,
-          lower_text_present: lowerText.length > 0,
         },
       },
       alternatives: [

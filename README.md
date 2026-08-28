@@ -95,7 +95,7 @@ project_report/         Requisitos e documentação do projeto
 src/
   components/           Vistas e componentes da aplicação
   data/                 Casos de estudo pré-carregados
-  utils/                Análise, geração de rastos e pipeline LangGraph
+        utils/                Análise, geração de rastos, classificador CUAD e pipeline LangGraph
   App.tsx               Composição principal e navegação entre vistas
   types.ts              Modelo de dados dos rastos e das cláusulas
 server.ts               Servidor Express e endpoints da aplicação
@@ -136,6 +136,14 @@ Testes de segmentação:
 ```bash
 PYTHONPATH=. pytest -q tests/test_clause_segmentation.py
 ```
+
+Testes TypeScript do pipeline, caminhos alternativos e monitor FPS:
+
+```bash
+npm test
+```
+
+Os casos CUAD apresentados pela aplicação são um subconjunto anotado extraído do ficheiro `CUADv1.json` do repositório oficial [The-Atticus-Project/cuad](https://github.com/The-Atticus-Project/cuad). A classificação guarda a categoria, a resposta anotada, o documento de origem e o offset da resposta para permitir auditoria da evidência.
 
 ## Limitações e enquadramento
 

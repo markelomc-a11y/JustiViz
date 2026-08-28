@@ -55,7 +55,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const [expandedExcerpt, setExpandedExcerpt] = useState<boolean>(false);
   const [currentClauseIndex, setCurrentClauseIndex] = useState<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const wheelLockRef = useRef<number>(0);
+  const wheelDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clauseItems = Array.isArray(trace.clauses) ? trace.clauses : [];
   const graphStatePath = useMemo(
     () => ['Extração de cláusulas', 'Classificação de risco', 'Consulta de precedentes', 'Auditoria de fidelidade', 'Síntese do veredito'],
@@ -225,20 +225,20 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
       event.preventDefault();
       event.stopPropagation();
 
-      const now = Date.now();
-      if (now - wheelLockRef.current < 260) return;
-
       const direction = event.deltaY > 0 ? 1 : -1;
-      const nextIndex = Math.min(steps.length - 1, Math.max(0, currentStepIndex + direction));
-
-      if (nextIndex !== currentStepIndex) {
-        wheelLockRef.current = now;
-        handleStepJump(nextIndex);
-      }
+      if (wheelDebounceRef.current) clearTimeout(wheelDebounceRef.current);
+      wheelDebounceRef.current = setTimeout(() => {
+        const nextIndex = Math.min(steps.length - 1, Math.max(0, currentStepIndex + direction));
+        if (nextIndex !== currentStepIndex) handleStepJump(nextIndex);
+        wheelDebounceRef.current = null;
+      }, 180);
     };
 
     container.addEventListener('wheel', handleNarrativeHoverScroll, { passive: false });
-    return () => container.removeEventListener('wheel', handleNarrativeHoverScroll);
+    return () => {
+      container.removeEventListener('wheel', handleNarrativeHoverScroll);
+      if (wheelDebounceRef.current) clearTimeout(wheelDebounceRef.current);
+    };
   }, [currentStepIndex, handleStepJump, steps.length]);
 
   const handleGraphNodeSelection = (step: TraceStep, alternative?: ForkedAlternative) => {

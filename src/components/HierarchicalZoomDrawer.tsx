@@ -23,6 +23,7 @@ import {
   HelpCircle,
   FileText
 } from 'lucide-react';
+import { VirtualizedAlternatives } from './VirtualizedAlternatives';
 
 interface HierarchicalZoomDrawerProps {
   step: TraceStep | null;
@@ -318,36 +319,7 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
               </p>
             </div>
 
-            <div className="space-y-3">
-              {step.alternatives.map((alt, idx) => (
-                <div 
-                  key={alt.id || idx} 
-                  className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors space-y-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                      Hipótese Rejeitada #{idx + 1}
-                    </span>
-                    <span className="text-[11px] font-mono text-slate-500 font-semibold">
-                      Grau de Confiança: {Math.round(alt.confidence_score * 100)}%
-                    </span>
-                  </div>
-
-                  <h4 className="text-sm font-semibold text-slate-900">
-                    {alt.hypothesis}
-                  </h4>
-
-                  <div className="p-3 rounded-lg bg-white border border-slate-200 text-xs text-slate-700 shadow-xs">
-                    <span className="text-amber-700 font-bold block mb-0.5">
-                      Fundamento Jurídico da Rejeição:
-                    </span>
-                    <p className="text-slate-600 leading-relaxed font-normal">
-                      {alt.rejection_reason}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <VirtualizedAlternatives alternatives={step.alternatives} />
           </div>
         )}
 

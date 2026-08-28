@@ -12,6 +12,7 @@ import { ScrollytellingView } from './components/ScrollytellingView';
 import { RelianceLab } from './components/RelianceLab';
 import { CustomContractAnalyzer } from './components/CustomContractAnalyzer';
 import { MethodologyHelpModal } from './components/MethodologyHelpModal';
+import { calculateFps } from './utils/fps';
 
 const ALL_INITIAL_CASE_STUDIES: ContractTrace[] = [
   ...PT_CASE_STUDIES,
@@ -41,17 +42,17 @@ export default function App() {
     let lastTime = performance.now();
     let animId: number;
 
-    const calculateFps = (now: number) => {
+    const sampleFrame = (now: number) => {
       frameCount++;
       if (now - lastTime >= 1000) {
-        setFps((frameCount * 1000) / (now - lastTime));
+        setFps(calculateFps(frameCount, now - lastTime));
         frameCount = 0;
         lastTime = now;
       }
-      animId = requestAnimationFrame(calculateFps);
+      animId = requestAnimationFrame(sampleFrame);
     };
 
-    animId = requestAnimationFrame(calculateFps);
+    animId = requestAnimationFrame(sampleFrame);
     return () => cancelAnimationFrame(animId);
   }, []);
 

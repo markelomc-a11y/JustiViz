@@ -90,13 +90,10 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
     });
 
     return {
-      ...trace,
       ...clauseTrace,
+      ...trace,
       clauses: clauseTrace.clauses,
-      contract_excerpt: clauseTrace.contract_excerpt,
-      steps: clauseTrace.steps,
-      final_verdict: clauseTrace.final_verdict,
-      trace_id: clauseTrace.trace_id,
+      contract_excerpt: contractText.slice(0, 500),
     };
   };
 
