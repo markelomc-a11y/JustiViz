@@ -246,7 +246,17 @@ def groq_call(system: str, prompt: str) -> str | None:
     })
     print(f"Groq request: model={GROQ_MODEL} prompt_chars={len(prompt)} key_length={len(key)} key_fingerprint={key_fingerprint}", file=sys.stderr)
     payload = json.dumps({"model": GROQ_MODEL, "temperature": 0.1, "max_tokens": 512, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}).encode()
-    request = urllib.request.Request(GROQ_URL, data=payload, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
+    request = urllib.request.Request(
+        GROQ_URL,
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "JustiViz/1.0 (academic research application)",
+        },
+        method="POST",
+    )
     try:
         with urllib.request.urlopen(request, timeout=25) as response:
             body = json.loads(response.read().decode())
