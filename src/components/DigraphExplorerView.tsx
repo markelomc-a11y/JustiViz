@@ -293,7 +293,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-slate-500 font-medium">
-                      CUAD: {step.payload.cuad_category_matched || 'Geral'}
+                      Referencial: {step.payload.cuad_category_matched || 'Geral'}
                     </span>
                     <button
                       onClick={() => onSelectStep(step)}

@@ -232,7 +232,7 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-[10px] text-slate-500 font-medium">Correspondência CUAD</span>
+                <span className="text-[10px] text-slate-500 font-medium">Referencial jurídico</span>
                 <p className="text-xs font-bold text-indigo-700 truncate">
                   {step.payload.cuad_category_matched || 'Geral'}
                 </p>

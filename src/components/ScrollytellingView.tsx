@@ -579,9 +579,9 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
                 <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <h4 className="text-[10px] uppercase tracking-[0.18em] text-indigo-700">Explicação gerativa</h4>
+                    <h4 className="text-[10px] uppercase tracking-[0.18em] text-indigo-700">Anotação generativa</h4>
                     <span className="text-[9px] uppercase tracking-wider text-indigo-600">
-                      {explanationSource === 'groq' ? 'Groq' : 'Anotação do trace'}
+                      {explanationSource === 'groq' ? 'Groq' : 'Anotação local'}
                     </span>
                   </div>
                   <p className="text-[12px] leading-relaxed text-indigo-950">{generatedExplanation}</p>
@@ -603,7 +603,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   </div>
 
                   <div className="rounded-lg bg-indigo-50 border border-indigo-100 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-700 mb-1">Método de decisão</p>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-700 mb-1">Referencial jurídico</p>
                     <p className="font-semibold text-indigo-950">{selectedAlternative ? selectedAlternative.cuad_category || 'Hipótese rejeitada' : selectedStep.payload?.cuad_category_matched || 'Classificação geral'}</p>
                   </div>
 

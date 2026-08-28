@@ -340,7 +340,10 @@ export function generateStaticTrace({
     governing_law: 'State of Delaware / UCC Commercial Standards',
     contract_excerpt: text,
     target_query: `Evaluate ${category} clause for financial exposure, asymmetric risk, and CUAD benchmark compliance.`,
-    steps: [step1, step2, step3, step4, step5],
+    steps: [step1, step2, step3, step4, step5].map((step) => ({
+      ...step,
+      generative_annotation: `${step.title}: ${step.summary} Text considered: "${text.replace(/\s+/g, ' ').slice(0, 120)}${text.length > 120 ? '...' : ''}"`,
+    })),
     final_verdict: {
       risk_score: riskScore,
       classification,

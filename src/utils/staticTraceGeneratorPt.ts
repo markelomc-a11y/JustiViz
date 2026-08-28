@@ -352,7 +352,10 @@ export function generateStaticTracePt({
     governing_law: 'Direito Português / Código Civil e DL n.º 446/85 (LCCG)',
     contract_excerpt: text,
     target_query: `Avaliar cláusula de ${category} quanto à proporcionalidade, teto indemnizatório e conformidade com o ordenamento jurídico português e europeu.`,
-    steps: [step1, step2, step3, step4, step5],
+    steps: [step1, step2, step3, step4, step5].map((step) => ({
+      ...step,
+      generative_annotation: `${step.title}: ${step.summary} Texto considerado: "${text.replace(/\s+/g, ' ').slice(0, 120)}${text.length > 120 ? '...' : ''}"`,
+    })),
     final_verdict: {
       risk_score: riskScore,
       classification,

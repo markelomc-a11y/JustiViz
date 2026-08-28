@@ -255,15 +255,18 @@ def level(score: int) -> str:
 
 
 def audit(summary: str, evidence: str) -> dict[str, Any]:
-    response = groq_call("You are a strict faithfulness auditor. Answer in concise Portuguese.", f"Compare this analysis summary with the evidence. State whether it is faithful and why.\nSummary: {summary}\nEvidence: {evidence}")
+    response = groq_call("You are a strict faithfulness auditor. Answer in concise European Portuguese. Do not mention CUAD unless it appears in the supplied evidence.", f"Compare this analysis summary with the supplied evidence. State in one short sentence whether it is faithful and why.\nSummary: {summary}\nEvidence: {evidence}")
     if response:
         return {"is_faithful": True, "faithfulness_score": 0.9, "audit_notes": response, "hallucination_risk": "low"}
     return {"is_faithful": bool(summary and evidence), "faithfulness_score": 0.75 if evidence else 0.5, "audit_notes": "Auditoria local: a evidência recuperada foi comparada com o resumo.", "hallucination_risk": "medium"}
 
 
 def annotation(node: str, summary: str, text: str, fallback: str) -> str:
-    response = groq_call("És um anotador jurídico conciso. Responde em português europeu, sem aconselhamento jurídico.", f"Explica em duas frases o que este estado LangGraph fez.\nEstado: {node}\nResumo: {summary}\nTexto: {text[:1200]}")
-    return response or fallback
+    response = groq_call("És um anotador jurídico conciso. Responde em português europeu, sem aconselhamento jurídico e sem mencionar fontes que não estejam no texto.", f"Resume em uma frase breve o que este nó fez para a cláusula abaixo. A resposta deve ser específica ao texto fornecido e não reutilizar explicações de outras cláusulas.\nEstado: {node}\nResumo: {summary}\nCláusula analisada: {text[:1200]}")
+    if response:
+        return response[:360].strip()
+    clause_excerpt = re.sub(r"\s+", " ", text).strip()[:140]
+    return f"{fallback} Evidência desta cláusula: {clause_excerpt}"
 
 
 def explain_step(node: str, summary: str, text: str, evidence: str = "") -> dict[str, Any]:
@@ -304,7 +307,7 @@ def build_graph():
     def faithfulness(state: GraphState):
         summary = "A auditoria verificou a ligação entre o resultado, o referencial jurídico selecionado e o texto submetido."
         result = audit(summary, state["retrieval"].get("evidence", ""))
-        return {"faithfulness": result, "steps": [make_step("faithfulness_audit", "Auditoria de fidelidade", summary, state.get("risk_level", "LOW"), 75, {"audit_target": "evidência CUAD e narrativa"}, [], annotation("faithfulness_audit", summary, state["text"], "Anotação simulada: a auditoria comparou narrativa e evidência."), result)]}
+        return {"faithfulness": result, "steps": [make_step("faithfulness_audit", "Auditoria de fidelidade", summary, state.get("risk_level", "LOW"), 75, {"audit_target": "referencial jurídico e narrativa", "audit_provider": "groq" if os.getenv("GROQ_API_KEY") else "local"}, [], annotation("faithfulness_audit", summary, state["text"], "Anotação local: a auditoria comparou a narrativa com a evidência do referencial selecionado."), result)]}
 
     def verdict(state: GraphState):
         summary = "A recomendação é um apoio à revisão humana baseado na evidência recuperada; não constitui aconselhamento jurídico."
