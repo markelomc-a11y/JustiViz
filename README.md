@@ -121,6 +121,21 @@ python3 -m pip install -r requirements.txt
 npm run dev
 ```
 
+No Windows PowerShell, use o launcher `py`:
+
+```powershell
+npm install
+py -3 -m pip install -r requirements.txt
+npm run dev
+```
+
+Se houver mais do que uma instalação de Python, o interpretador pode ser definido explicitamente:
+
+```powershell
+$env:PYTHON_BIN = "py"
+npm run dev
+```
+
 O servidor é iniciado na porta `3000`. A aplicação fica normalmente disponível em `http://localhost:3000`.
 
 O Express inicia o serviço Python LangGraph em `127.0.0.1:8001` e funciona como proxy para a interface. A chave opcional da Groq deve ser definida no ficheiro `.env` através de `GROQ_API_KEY`; não deve ser colocada no código nem no frontend. Sem a chave, o LangGraph continua a executar, usando validação local para as tarefas secundárias.

@@ -14,11 +14,35 @@ let langGraphStartupError: string | null = null;
 
 app.use(express.json({ limit: "10mb" }));
 
+function findPythonCommand() {
+  const configuredCommand = process.env.PYTHON_BIN;
+  const candidates = configuredCommand
+    ? [configuredCommand]
+    : process.platform === "win32"
+      ? ["python", "py"]
+      : ["python3", "python"];
+
+  for (const command of candidates) {
+    const result = spawnSync(command, ["--version"], { stdio: "ignore", windowsHide: true });
+    if (!result.error && result.status === 0) return command;
+  }
+
+  return null;
+}
+
 function startLangGraphService() {
-  langGraphProcess = spawn(process.env.PYTHON_BIN || "python3", ["agent/langgraph_service.py"], {
+  const pythonCommand = findPythonCommand();
+  if (!pythonCommand) {
+    langGraphStartupError = "Python 3 não foi encontrado. Instale Python 3.10+ e adicione-o ao PATH";
+    console.error(`[LangGraph] ${langGraphStartupError}`);
+    return;
+  }
+
+  langGraphProcess = spawn(pythonCommand, ["agent/langgraph_service.py"], {
     cwd: process.cwd(),
     env: { ...process.env, LANGGRAPH_PORT: String(LANGGRAPH_PORT) },
     stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true,
   });
   langGraphProcess.stderr?.on("data", (chunk) => console.error(`[LangGraph] ${chunk.toString().trim()}`));
   langGraphProcess.on("error", (error) => {
@@ -84,11 +108,16 @@ app.post("/api/segment-contract", (req, res) => {
       return res.status(400).json({ error: "contractText is required" });
     }
 
-    const python = process.platform === "win32" ? "python" : "python3";
+    const python = findPythonCommand();
+    if (!python) {
+      return res.status(500).json({ error: "Python 3 não foi encontrado. Instale Python 3.10+ e adicione-o ao PATH." });
+    }
+
     const result = spawnSync(python, ["agent/segmentation.py"], {
       input: JSON.stringify({ contractText }),
       encoding: "utf8",
       cwd: process.cwd(),
+      windowsHide: true,
     });
 
     if (result.error) {
