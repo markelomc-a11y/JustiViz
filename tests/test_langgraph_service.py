@@ -42,3 +42,5 @@ def test_selected_legal_category_controls_retrieval_source():
     assert retrieval_state['retrieval'] == 'legal_framework_keywords'
     assert '2016/679' in trace['metadata']['legal_source_name']
     assert 'eur-lex.europa.eu' in trace['metadata']['legal_source_url']
+    assert all('corpus CUAD' not in step['summary'] for step in trace['steps'])
+    assert all('corpus CUAD' not in step['summary'] for clause in trace['clauses'] for step in clause['trace']['steps'])

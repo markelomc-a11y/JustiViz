@@ -312,7 +312,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
                       Caminho Decisório Adotado (Ramo Ativo de Execução)
                     </span>
                     <span className="text-xs font-mono text-emerald-700 font-bold">
-                      Grau de Confiança: {Math.round((step.payload.confidence_metric || 0.95) * 100)}%
+                      Grau de Confiança: {step.payload.confidence_metric !== undefined ? `${Math.round(step.payload.confidence_metric * 100)}%` : 'N/D'}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-indigo-950 leading-relaxed font-normal">

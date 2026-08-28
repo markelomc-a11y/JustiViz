@@ -369,7 +369,9 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}>
-                            {step.faithfulness_metadata.is_faithful ? 'Fiel (98%)' : '🚨 AVISO DE FIDELIDADE (25%)'}
+                            {step.faithfulness_metadata.is_faithful
+                              ? `Fiel (${Math.round(step.faithfulness_metadata.faithfulness_score * 100)}%)`
+                              : `🚨 AVISO DE FIDELIDADE (${Math.round(step.faithfulness_metadata.faithfulness_score * 100)}%)`}
                           </span>
                         </div>
                       </div>
@@ -499,7 +501,17 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                   <strong className="text-slate-800 block mb-0.5 font-bold">Realidade Efetiva (Ground Truth):</strong>
                   {activeCase.reliance_profile?.injected_error_present
                     ? activeCase.reliance_profile.error_description
-                    : 'O contrato foi analisado com rigor e 98% de fidelidade aos termos do documento.'}
+                    : (() => {
+                        const scores = activeCase.steps
+                          .map((step) => step.faithfulness_metadata?.faithfulness_score)
+                          .filter((score): score is number => score !== undefined);
+                        const averageScore = scores.length
+                          ? Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 100)
+                          : null;
+                        return averageScore === null
+                          ? 'Não existe ground truth explícito para este caso.'
+                          : `Não foi detetado erro injetado. Fidelidade média registada: ${averageScore}%.`;
+                      })()}
                 </div>
               </div>
             )}

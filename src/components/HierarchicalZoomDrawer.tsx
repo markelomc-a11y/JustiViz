@@ -227,7 +227,7 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[10px] text-slate-500 font-medium">Grau de Confiança</span>
                 <p className="text-base font-bold text-emerald-700 font-mono">
-                  {Math.round((step.payload.confidence_metric || 0.96) * 100)}%
+                  {step.payload.confidence_metric !== undefined ? `${Math.round(step.payload.confidence_metric * 100)}%` : 'N/D'}
                 </p>
               </div>
 
@@ -242,7 +242,7 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
                 <span className="text-[10px] text-slate-500 font-medium">Latência de Execução</span>
                 <p className="text-base font-bold text-slate-800 flex items-center gap-1 font-mono">
                   <Clock className="w-3 h-3 text-slate-500" />
-                  {step.execution_time_ms || 340} ms
+                  {step.execution_time_ms !== undefined ? `${step.execution_time_ms} ms` : 'N/D'}
                 </p>
               </div>
             </div>

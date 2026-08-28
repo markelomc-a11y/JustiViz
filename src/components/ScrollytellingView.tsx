@@ -74,6 +74,10 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const currentStep = steps[currentStepIndex] || steps[0];
   const activeStep = selectedStep ?? currentStep;
 
+  const displaySummary = activeStep?.summary === 'O texto foi preparado e comparado com o corpus CUAD.'
+    ? `O texto foi preparado e comparado com o referencial selecionado: ${trace.category}.`
+    : activeStep?.summary;
+
   const excerptText = currentClause?.text || trace.contract_excerpt || '';
 
   const [generatedExplanation, setGeneratedExplanation] = useState<string>('A carregar explicação gerativa...');
@@ -570,7 +574,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
               <div className="space-y-3">
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                   <h4 className="text-[10px] uppercase tracking-[0.18em] text-slate-600 mb-2">Resumo narrativo</h4>
-                  <p className="text-sm text-slate-800 leading-relaxed">{selectedAlternative ? selectedAlternative.hypothesis : activeStep.summary}</p>
+                  <p className="text-sm text-slate-800 leading-relaxed">{selectedAlternative ? selectedAlternative.hypothesis : displaySummary}</p>
                 </div>
 
                 <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
@@ -638,7 +642,11 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Métricas</p>
                     <div className="flex items-center justify-between">
                       <span>Confiança</span>
-                      <strong>{Math.round(((selectedAlternative ? selectedAlternative.confidence_score : activeStep.payload?.confidence_metric) || 0.95) * 100)}%</strong>
+                      <strong>{selectedAlternative
+                        ? `${Math.round(selectedAlternative.confidence_score * 100)}%`
+                        : activeStep.payload?.confidence_metric !== undefined
+                          ? `${Math.round(activeStep.payload.confidence_metric * 100)}%`
+                          : 'N/D'}</strong>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Fidelidade</span>
@@ -646,7 +654,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Latência</span>
-                      <strong>{activeStep.execution_time_ms || 340} ms</strong>
+                      <strong>{activeStep.execution_time_ms !== undefined ? `${activeStep.execution_time_ms} ms` : 'N/D'}</strong>
                     </div>
                   </div>
 

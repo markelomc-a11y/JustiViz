@@ -410,7 +410,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
             .attr('fill', '#38bdf8')
             .attr('font-size', '8.5px')
             .attr('font-family', 'monospace')
-            .text(`Ref: ${node.stepData.payload.cuad_category_matched?.slice(0, 16) || 'Verificado'} | Conf: ${Math.round((node.stepData.payload.confidence_metric || 0.95) * 100)}%`);
+            .text(`Ref: ${node.stepData.payload.cuad_category_matched?.slice(0, 16) || 'N/D'} | Conf: ${node.stepData.payload.confidence_metric !== undefined ? `${Math.round(node.stepData.payload.confidence_metric * 100)}%` : 'N/D'}`);
         }
 
         // Critical Node Marker
