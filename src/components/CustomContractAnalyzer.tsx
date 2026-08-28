@@ -54,7 +54,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
-  const [aiStatus, setAiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [aiStatus, setAiStatus] = useState<'checking' | 'online' | 'groq-offline' | 'offline'>('checking');
   const [lastGeneratedTrace, setLastGeneratedTrace] = useState<ContractTrace | null>(null);
   const [clauses, setClauses] = useState<Array<{ index: number; title: string; text: string }>>([]);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState<boolean>(false);
@@ -114,7 +114,9 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
       .then((response) => response.json())
       .then((payload) => {
         if (!cancelled) {
-          setAiStatus(payload?.status === 'ok' && Boolean(payload?.hasLangGraph) ? 'online' : 'offline');
+          setAiStatus(payload?.status === 'ok' && Boolean(payload?.hasLangGraph)
+            ? payload?.groq ? 'online' : 'groq-offline'
+            : 'offline');
         }
       })
       .catch(() => {
@@ -404,14 +406,16 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
             <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-semibold ${
               aiStatus === 'online'
                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : aiStatus === 'offline'
+                : aiStatus === 'groq-offline'
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : aiStatus === 'offline'
                   ? 'bg-amber-50 text-amber-700 border border-amber-200'
                   : 'bg-slate-100 text-slate-600 border border-slate-200'
             }`}>
               <span className={`h-2 w-2 rounded-full ${
-                aiStatus === 'online' ? 'bg-emerald-500' : aiStatus === 'offline' ? 'bg-amber-500' : 'bg-slate-400'
+                aiStatus === 'online' ? 'bg-emerald-500' : aiStatus === 'groq-offline' || aiStatus === 'offline' ? 'bg-amber-500' : 'bg-slate-400'
               }`} />
-              {aiStatus === 'online' ? 'LangGraph ativo' : aiStatus === 'offline' ? 'Modo contingência' : 'A verificar...'}
+              {aiStatus === 'online' ? 'LangGraph + Groq ativos' : aiStatus === 'groq-offline' ? 'LangGraph ativo; Groq indisponível' : aiStatus === 'offline' ? 'Modo contingência' : 'A verificar...'}
             </span>
           </div>
 

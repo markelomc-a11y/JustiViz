@@ -92,12 +92,25 @@ async function callLangGraph(pathname: string, payload?: unknown) {
 }
 
 // Health check
-app.get("/api/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    hasLangGraph: true,
-    timestamp: new Date().toISOString(),
-  });
+app.get("/api/health", async (_req, res) => {
+  try {
+    const serviceHealth = await callLangGraph("/health");
+    res.json({
+      status: "ok",
+      hasLangGraph: true,
+      groq: Boolean(serviceHealth.groq),
+      cuadExamples: serviceHealth.cuad_examples,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.json({
+      status: "degraded",
+      hasLangGraph: false,
+      groq: false,
+      error: error.message || "LangGraph service unavailable",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 app.post("/api/segment-contract", (req, res) => {
