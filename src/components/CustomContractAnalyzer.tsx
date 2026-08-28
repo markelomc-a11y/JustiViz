@@ -1,7 +1,6 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { ContractTrace } from '../types';
 import {
-  buildFallbackTrace,
   buildTraceFromContractText,
   parseUploadedFile,
 } from '../utils/contractAnalysis';
@@ -78,30 +77,9 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
     }
   };
 
-  const applyClauseTracePipeline = (
-    trace: ContractTrace,
-    segmentList: Array<{ index?: number; title?: string; text?: string }> = clauses,
-  ) => {
-    const clauseTrace = buildTraceFromContractText({
-      contractTitle,
-      category: selectedCategories.join(' • '),
-      contractText,
-      segmentList,
-    });
-
-    return {
-      ...clauseTrace,
-      ...trace,
-      clauses: clauseTrace.clauses,
-      contract_excerpt: contractText.slice(0, 500),
-    };
-  };
-
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) {
-      return;
-    }
+    if (!selectedFile) return;
 
     setIsLoading(true);
     setErrorMessage(null);
@@ -109,10 +87,7 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
 
     try {
       const extractedText = await parseUploadedFile(selectedFile);
-
-      if (!extractedText.trim()) {
-        throw new Error('O ficheiro carregado não contém texto legível.');
-      }
+      if (!extractedText.trim()) throw new Error('O ficheiro carregado não contém texto legível.');
 
       const fileStem = selectedFile.name.replace(/\.[^.]+$/, '');
       setContractTitle(fileStem || 'Contrato Carregado');
@@ -221,11 +196,8 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
           throw new Error('A resposta da IA é inválida ou está incompleta.');
         }
 
-        const nextClauses = await segmentContractText(contractText);
-        const enrichedTrace = applyClauseTracePipeline(trace, nextClauses && nextClauses.length > 0 ? nextClauses : [{ index: 0, title: 'Cláusula principal', text: contractText }]);
-
-        setLastGeneratedTrace(enrichedTrace);
-        onAddCustomTrace(enrichedTrace);
+        setLastGeneratedTrace(trace);
+        onAddCustomTrace(trace);
         setStatusMessage('A análise em tempo real está ativa e o rasto personalizado foi adicionado.');
         return;
       }
@@ -235,10 +207,11 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
       console.warn('AI analysis unavailable, using offline fallback:', offlineMessage);
       setStatusMessage('Serviço de IA indisponível; a utilizar a lógica jurídica local de contingência.');
 
-      const fullTrace = buildFallbackTrace({
+      const fullTrace = buildTraceFromContractText({
         contractTitle,
         category: selectedCategories.join(' • '),
         contractText,
+        segmentList: clauses,
       });
 
       setLastGeneratedTrace(fullTrace);
@@ -247,10 +220,11 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
       console.error(err);
       setErrorMessage(err.message || 'Erro ao compilar a representação estática do rasto.');
 
-      const fullTrace = buildFallbackTrace({
+      const fullTrace = buildTraceFromContractText({
         contractTitle,
         category: selectedCategories.join(' • '),
         contractText,
+        segmentList: clauses,
       });
 
       setLastGeneratedTrace(fullTrace);

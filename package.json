@@ -13,8 +13,6 @@
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
-    "@langchain/core": "^1.2.9",
-    "@langchain/langgraph": "^1.4.13",
     "@tailwindcss/vite": "^4.1.14",
     "@types/canvas-confetti": "^1.9.0",
     "@types/d3": "^7.4.3",

@@ -6,7 +6,6 @@ import {
   RiskLevel,
   ForkedAlternative
 } from '../types';
-import { runMockFaithfulnessAudit } from '../utils/mockLangGraph';
 import { GraphCanvas } from './GraphCanvas';
 import { 
   Play, 
@@ -78,15 +77,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
 
   const mockAnnotation = 'Esta anotação seria gerada por um LLM local. Nesta demonstração, o conteúdo é simulado e funciona apenas como marcador.';
 
-  const mockAudit = useMemo(() => {
-    if (!activeStep) return null;
-
-    return runMockFaithfulnessAudit({
-      summary: activeStep.summary,
-      technicalPayload: activeStep.payload,
-      nodeType: activeStep.type,
-    });
-  }, [activeStep]);
+  const mockAudit = activeStep?.faithfulness_metadata;
 
   const isLongExcerpt = excerptText.length > 220;
   const currentClauseTitle = currentClause ? `${trace.contract_title} - Cláusula ${currentClause.index ?? currentClauseIndex + 1}` : trace.contract_title;

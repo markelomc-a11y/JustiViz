@@ -66,11 +66,11 @@ React + TypeScript
         +-- Analisador de contratos
         +-- Laboratório de confiança
         |
-Express + Vite (server.ts)
+Express + Vite (server.ts, proxy)
         |
         +-- /api/segment-contract --> Python (agent/segmentation.py)
-        +-- /api/analyze-contract  --> agente LangGraph local
-        +-- /api/audit-faithfulness --> auditoria local simulada
+        +-- /api/analyze-contract  --> serviço Python LangGraph
+        +-- /api/audit-faithfulness --> serviço Python + Groq opcional
         |
         +-- Integração futura      --> modelos LLM locais através do Ollama
 ```
@@ -81,7 +81,8 @@ Tecnologias principais:
 - Vite e Express;
 - D3.js para o grafo dirigido;
 - Scrollama para os eventos da narrativa;
-- LangGraph para a cadeia de estados da análise;
+- LangGraph para a cadeia de estados da análise, em Python;
+- Groq como LLM secundário externo opcional para anotações e auditoria;
 - Ollama e modelos LLM locais como integração prevista;
 - Python para a segmentação de cláusulas;
 - Tailwind CSS para a interface;
@@ -95,7 +96,7 @@ project_report/         Requisitos e documentação do projeto
 src/
   components/           Vistas e componentes da aplicação
   data/                 Casos de estudo pré-carregados
-        utils/                Análise, geração de rastos, classificador CUAD e pipeline LangGraph
+        utils/                Análise, geração de rastos e classificador CUAD
   App.tsx               Composição principal e navegação entre vistas
   types.ts              Modelo de dados dos rastos e das cláusulas
 server.ts               Servidor Express e endpoints da aplicação
@@ -106,7 +107,8 @@ tests/                  Testes da segmentação de cláusulas
 
 - Node.js 18 ou superior;
 - npm;
-- Python 3 para o endpoint de segmentação;
+- Python 3.10 ou superior;
+- dependências Python instaladas através de `requirements.txt`;
 - dependências instaladas através do `package.json`.
 
 ## Instalação e execução
@@ -115,12 +117,13 @@ Na raiz do projeto:
 
 ```bash
 npm install
+python3 -m pip install -r requirements.txt
 npm run dev
 ```
 
 O servidor é iniciado na porta `3000`. A aplicação fica normalmente disponível em `http://localhost:3000`.
 
-O agente LangGraph é executado localmente. Se algum componente auxiliar não estiver disponível, o protótipo utiliza a lógica local de contingência. Esta alternativa destina-se a demonstração e experimentação académica, não a substituir um serviço de análise jurídica validado.
+O Express inicia o serviço Python LangGraph em `127.0.0.1:8001` e funciona como proxy para a interface. A chave opcional da Groq deve ser definida no ficheiro `.env` através de `GROQ_API_KEY`; não deve ser colocada no código nem no frontend. Sem a chave, o LangGraph continua a executar, usando validação local para as tarefas secundárias.
 
 ## Scripts disponíveis
 
@@ -135,6 +138,7 @@ Testes de segmentação:
 
 ```bash
 PYTHONPATH=. pytest -q tests/test_clause_segmentation.py
+PYTHONPATH=. pytest -q tests/test_clause_segmentation.py tests/test_langgraph_service.py
 ```
 
 Testes TypeScript do pipeline, caminhos alternativos e monitor FPS:
@@ -143,7 +147,7 @@ Testes TypeScript do pipeline, caminhos alternativos e monitor FPS:
 npm test
 ```
 
-Os casos CUAD apresentados pela aplicação são um subconjunto anotado extraído do ficheiro `CUADv1.json` do repositório oficial [The-Atticus-Project/cuad](https://github.com/The-Atticus-Project/cuad). A classificação guarda a categoria, a resposta anotada, o documento de origem e o offset da resposta para permitir auditoria da evidência.
+O serviço usa um corpus CUAD local em `agent/cuad_corpus.json`, com recuperação vetorial TF-IDF e similaridade de cosseno. O corpus pode ser substituído ou ampliado com um subconjunto maior de `CUADv1.json`, preservando os campos de categoria, resposta anotada, documento de origem e contexto para auditoria da evidência.
 
 ## Limitações e enquadramento
 

@@ -1,17 +1,38 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { spawnSync } from "child_process";
+import { spawn, spawnSync, ChildProcess } from "child_process";
 import { createServer as createViteServer } from "vite";
-import { runLangGraphPipeline } from "./src/utils/langgraphPipeline";
-import { runMockFaithfulnessAudit } from "./src/utils/mockLangGraph";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+const LANGGRAPH_PORT = Number(process.env.LANGGRAPH_PORT || 8001);
+let langGraphProcess: ChildProcess | null = null;
 
 app.use(express.json({ limit: "10mb" }));
+
+function startLangGraphService() {
+  langGraphProcess = spawn(process.env.PYTHON_BIN || "python3", ["agent/langgraph_service.py"], {
+    cwd: process.cwd(),
+    env: { ...process.env, LANGGRAPH_PORT: String(LANGGRAPH_PORT) },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  langGraphProcess.stderr?.on("data", (chunk) => console.error(`[LangGraph] ${chunk.toString().trim()}`));
+  langGraphProcess.on("error", (error) => console.error("Could not start LangGraph service:", error));
+}
+
+async function callLangGraph(pathname: string, payload?: unknown) {
+  const response = await fetch(`http://127.0.0.1:${LANGGRAPH_PORT}${pathname}`, {
+    method: payload === undefined ? "GET" : "POST",
+    headers: payload === undefined ? undefined : { "Content-Type": "application/json" },
+    body: payload === undefined ? undefined : JSON.stringify(payload),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data?.error || "LangGraph service request failed");
+  return data;
+}
 
 // Health check
 app.get("/api/health", (_req, res) => {
@@ -52,7 +73,7 @@ app.post("/api/segment-contract", (req, res) => {
   }
 });
 
-// Analyze contract using a real LangGraph state machine.
+// Proxy analysis requests to the Python LangGraph service.
 app.post("/api/analyze-contract", async (req, res) => {
   try {
     const { contractText, contractTitle, category } = req.body;
@@ -61,7 +82,7 @@ app.post("/api/analyze-contract", async (req, res) => {
       return res.status(400).json({ error: "contractText is required" });
     }
 
-    const trace = await runLangGraphPipeline({
+    const trace = await callLangGraph("/analyze", {
       contractTitle: contractTitle || "Custom Submitted Contract",
       category: category || "General Risk Assessment",
       contractText,
@@ -79,7 +100,7 @@ app.post("/api/analyze-contract", async (req, res) => {
   }
 });
 
-// Real-time Faithfulness Audit endpoint - mocked for the local Ollama audit path only.
+// Proxy faithfulness audit requests to the Python LangGraph service.
 app.post("/api/audit-faithfulness", async (req, res) => {
   try {
     const { summary, technicalPayload, nodeType } = req.body;
@@ -88,11 +109,7 @@ app.post("/api/audit-faithfulness", async (req, res) => {
       return res.status(400).json({ error: "summary is required" });
     }
 
-    const data = runMockFaithfulnessAudit({
-      summary,
-      technicalPayload: technicalPayload ?? {},
-      nodeType: nodeType || "audit",
-    });
+    const data = await callLangGraph("/audit", { summary, technicalPayload: technicalPayload ?? {}, nodeType: nodeType || "audit" });
 
     res.json({
       success: true,
@@ -108,6 +125,7 @@ app.post("/api/audit-faithfulness", async (req, res) => {
 
 // Setup Vite middleware or static serving
 async function startServer() {
+  startLangGraphService();
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -126,5 +144,7 @@ async function startServer() {
     console.log(`JustiViz Server running on http://localhost:${PORT}`);
   });
 }
+
+process.on("exit", () => langGraphProcess?.kill());
 
 startServer();
