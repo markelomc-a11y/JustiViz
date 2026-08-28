@@ -15,6 +15,17 @@ export function generateStaticTracePt({
   const lowerText = text.toLowerCase();
   const traceId = `pt-custom-trace-${Date.now()}`;
 
+  const normalizedCategory = category.toLowerCase();
+  const legalBasis = normalizedCategory.includes('rgpd')
+    ? 'Regulamento (UE) 2016/679 (RGPD), nomeadamente os artigos 28.º, 32.º e 33.º'
+    : normalizedCategory.includes('trabalho') || normalizedCategory.includes('concorrência')
+      ? 'Código do Trabalho Português, nomeadamente o artigo 136.º, e Constituição da República Portuguesa, artigo 47.º'
+      : normalizedCategory.includes('constituição')
+        ? 'Constituição da República Portuguesa, nomeadamente os artigos 13.º, 18.º, 47.º e 59.º'
+        : normalizedCategory.includes('ia da ue') || normalizedCategory.includes('inteligência artificial')
+          ? 'Regulamento (UE) 2024/1689 (Regulamento da IA da UE), nomeadamente os artigos 13.º, 14.º e 50.º'
+          : 'Código Civil Português e Decreto-Lei n.º 446/85 (LCCG), nomeadamente os artigos 236.º, 280.º, 405.º, 762.º e 809.º';
+
   // Analyze text characteristics under Portuguese Law (Código Civil & DL 446/85 LCCG)
   const isIndemnity = lowerText.includes('indemniz') || lowerText.includes('ressarcir') || lowerText.includes('perdas e danos');
   const isNonCompete = lowerText.includes('não concorrência') || lowerText.includes('concorrente') || lowerText.includes('exclusividade');
@@ -61,7 +72,7 @@ export function generateStaticTracePt({
     node_name: 'extract_clauses',
     type: 'extraction',
     title: 'Ingestão da Minuta e Extração de Unidades Normativas',
-    summary: `Ingestão semântica de ${text.length} carateres em conformidade com o enquadramento do ${category} e do Código Civil Português.`,
+    summary: `Ingestão semântica de ${text.length} carateres em conformidade com o enquadramento selecionado: ${category}.`,
     generative_annotation: `O agente realizou a tokenização do texto jurídico em português europeu, identificando obrigações contratuais, partes intervenientes e disposições sancionatórias.`,
     risk_level: 'LOW',
     scroll_phase: 0,
@@ -69,7 +80,7 @@ export function generateStaticTracePt({
       extracted_entities: ['Parte Outorgante 1 (Devedor da Prestação)', 'Parte Outorgante 2 (Credor Beneficiário)'],
       cuad_category_matched: category,
       confidence_metric: 0.985,
-      statutory_basis: 'Código Civil (Arts. 405.º e 562.º) e DL n.º 446/85 (LCCG)',
+      statutory_basis: legalBasis,
       raw_clause_quote: rawQuote,
       token_usage: { prompt_tokens: 360, completion_tokens: 190, total_tokens: 550 },
     },
@@ -120,7 +131,7 @@ export function generateStaticTracePt({
     payload: {
       cuad_category_matched: category,
       confidence_metric: 0.968,
-      statutory_basis: 'Arts. 762.º, n.º 2 e 809.º do Código Civil',
+      statutory_basis: legalBasis,
       raw_clause_quote: rawQuote,
       embeddings_cosine_similarity: 0.945,
     },

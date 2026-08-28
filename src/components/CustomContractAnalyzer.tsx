@@ -21,6 +21,11 @@ import {
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
+  'Regulamento da IA da UE (Regulamento 2024/1689)',
+  'RGPD (Regulamento UE 2016/679)',
+  'Código Civil Português',
+  'Código do Trabalho Português',
+  'Constituição da República Portuguesa',
   'DL 446/85 (LCCG) • Indemnização e Responsabilidade',
   'Código do Trabalho (Art. 136.º) • Não-Concorrência',
   'RGPD (Regulamento UE 2016/679) • Notificação de Incidentes',
@@ -39,8 +44,8 @@ export const CustomContractAnalyzer: React.FC<CustomContractAnalyzerProps> = ({
   onNavigateToScrollytelling,
 }) => {
   const [contractTitle, setContractTitle] = useState<string>('Acordo de Prestação de Serviços Empresariais');
-  const [category, setCategory] = useState<string>('DL 446/85 (LCCG) • Indemnização e Responsabilidade');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([CATEGORY_OPTIONS[0]]);
+  const [category, setCategory] = useState<string>(CATEGORY_OPTIONS[5]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([CATEGORY_OPTIONS[5]]);
   const [contractText, setContractText] = useState<string>(
     `CLÁUSULA 12.ª — INDEMNIZAÇÃO E LIMITAÇÃO DE REMÉDIOS.
   12.1 O Prestador defenderá e indemnizará o Cliente contra qualquer reclamação de terceiros que alegue que os Serviços Cloud violam uma patente, direito de autor ou marca.

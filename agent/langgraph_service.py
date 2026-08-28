@@ -13,8 +13,10 @@ import operator
 import re
 import sys
 import threading
+import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
@@ -24,6 +26,9 @@ from segmentation import segment_contract
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS_PATH = ROOT / "agent" / "cuad_corpus.json"
+LEGAL_CACHE_DIR = Path(os.getenv("LEGAL_SOURCE_CACHE_DIR", str(ROOT / ".cache" / "legal-sources")))
+LEGAL_CACHE_TTL_SECONDS = int(os.getenv("LEGAL_SOURCE_CACHE_TTL_HOURS", "168")) * 60 * 60
+LEGAL_SOURCE_TIMEOUT_SECONDS = float(os.getenv("LEGAL_SOURCE_TIMEOUT_SECONDS", "8"))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
@@ -67,6 +72,153 @@ def retrieve_cuad(text: str) -> dict[str, Any]:
         return {"category": "Sem correspondência CUAD suficiente", "score": 20, "similarity": round(score, 4), "evidence": "", "source": ""}
     risk_score = round(min(100, 20 + score * 80))
     return {"category": best.get("category", "CUAD"), "score": risk_score, "similarity": round(score, 4), "evidence": best.get("answer", ""), "source": best.get("documentTitle", "")}
+
+
+class LegalHtmlParser(HTMLParser):
+    """Keep readable text while dropping page chrome and executable content."""
+
+    IGNORED_TAGS = {"script", "style", "nav", "header", "footer", "form", "aside"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+        self.ignored_depth = 0
+
+    def handle_starttag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
+        if tag in self.IGNORED_TAGS:
+            self.ignored_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self.IGNORED_TAGS and self.ignored_depth:
+            self.ignored_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self.ignored_depth:
+            text = re.sub(r"\s+", " ", data).strip()
+            if text:
+                self.parts.append(text)
+
+    def text(self) -> str:
+        return "\n".join(self.parts)
+
+
+def parse_legal_html(payload: bytes) -> str:
+    parser = LegalHtmlParser()
+    parser.feed(payload.decode("utf-8", errors="replace"))
+    return parser.text()
+
+
+def legal_cache_path(profile: dict[str, Any]) -> Path:
+    filename = re.sub(r"[^a-z0-9-]+", "-", profile["name"].lower()).strip("-")
+    return LEGAL_CACHE_DIR / f"{filename}.txt"
+
+
+def load_cached_legal_text(profile: dict[str, Any]) -> tuple[str, str]:
+    cache_path = legal_cache_path(profile)
+    if cache_path.exists() and time.time() - cache_path.stat().st_mtime <= LEGAL_CACHE_TTL_SECONDS:
+        try:
+            return cache_path.read_text(encoding="utf-8"), "cache"
+        except OSError:
+            pass
+
+    request = urllib.request.Request(
+        profile["source"],
+        headers={"User-Agent": "JustiViz/1.0 academic legal-source retriever"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=LEGAL_SOURCE_TIMEOUT_SECONDS) as response:
+            text = parse_legal_html(response.read())
+        if len(text) < 40:
+            raise ValueError("official source returned insufficient readable text")
+        LEGAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(text, encoding="utf-8")
+        return text, "downloaded"
+    except Exception as error:
+        print(f"Legal source unavailable ({profile['name']}): {error}", file=sys.stderr)
+        if cache_path.exists():
+            try:
+                return cache_path.read_text(encoding="utf-8"), "stale-cache"
+            except OSError:
+                pass
+        return "", "unavailable"
+
+
+def legal_evidence(text: str, source_text: str, terms: tuple[str, ...]) -> str:
+    contract_excerpt = (text or "").strip()[:700]
+    normalized_source = source_text.lower()
+    source_excerpt = ""
+    for term in terms:
+        position = normalized_source.find(term.lower())
+        if position >= 0:
+            source_excerpt = source_text[max(0, position - 160):position + 360]
+            break
+    if source_excerpt:
+        return f"Texto submetido:\n{contract_excerpt}\n\nFonte legal oficial:\n{source_excerpt}"
+    return contract_excerpt
+
+
+LEGAL_PROFILES: list[dict[str, Any]] = [
+    {
+        "match": ("regulamento da ia", "eu ai act", "inteligência artificial"),
+        "name": "Regulamento da IA da UE (Regulamento 2024/1689)",
+        "basis": "Regulamento (UE) 2024/1689, nomeadamente os artigos 13.º, 14.º e 50.º",
+        "source": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+        "terms": ("sistema de ia", "supervisão humana", "transparência", "alto risco", "modelo", "agente"),
+    },
+    {
+        "match": ("rgpd", "regulamento ue 2016/679", "dados pessoais"),
+        "name": "RGPD (Regulamento UE 2016/679)",
+        "basis": "Regulamento (UE) 2016/679, nomeadamente os artigos 5.º, 28.º, 32.º, 33.º e 35.º",
+        "source": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+        "terms": ("dados pessoais", "subcontratante", "violação", "segurança", "notificar", "responsável pelo tratamento"),
+    },
+    {
+        "match": ("código civil", "dl 446/85", "lccg", "indemnização", "responsabilidade"),
+        "name": "Código Civil Português e DL 446/85 (LCCG)",
+        "basis": "Código Civil Português e Decreto-Lei n.º 446/85 (LCCG), nomeadamente os artigos 236.º, 280.º, 405.º, 762.º e 809.º",
+        "source": "https://diariodarepublica.pt/legislacao-consolidada",
+        "terms": ("contrato", "obrigação", "responsabilidade", "indemnização", "culpa", "boa-fé", "cláusula"),
+    },
+    {
+        "match": ("código do trabalho", "não-concorrência", "não concorrência", "laboral"),
+        "name": "Código do Trabalho Português",
+        "basis": "Código do Trabalho Português, nomeadamente os artigos 136.º e 137.º",
+        "source": "https://diariodarepublica.pt/legislacao-consolidada",
+        "terms": ("trabalhador", "empregador", "cessação", "não concorrência", "compensação", "atividade concorrente"),
+    },
+    {
+        "match": ("constituição da república", "constituição portuguesa", "constituição"),
+        "name": "Constituição da República Portuguesa",
+        "basis": "Constituição da República Portuguesa, nomeadamente os artigos 13.º, 18.º, 47.º e 59.º",
+        "source": "https://www.parlamento.pt/Legislacao/Paginas/ConstituicaoRepublicaPortuguesa.aspx",
+        "terms": ("direito", "liberdade", "igualdade", "trabalho", "proteção", "dignidade"),
+    },
+]
+
+
+def retrieve_legal_framework(text: str, category: str) -> dict[str, Any]:
+    normalized_category = (category or "").lower()
+    profile = next((item for item in LEGAL_PROFILES if any(term in normalized_category for term in item["match"])), None)
+    if not profile:
+        return retrieve_cuad(text)
+
+    normalized_text = (text or "").lower()
+    source_text, source_status = load_cached_legal_text(profile)
+    matched_terms = [term for term in profile["terms"] if term in normalized_text]
+    source_matches = [term for term in profile["terms"] if term in source_text.lower()]
+    score = min(92, 35 + len(matched_terms) * 9 + min(18, len(source_matches) * 2))
+    return {
+        "category": profile["name"],
+        "score": score,
+        "similarity": round(len(matched_terms) / max(len(profile["terms"]), 1), 4),
+        "evidence": legal_evidence(text, source_text, profile["terms"]),
+        "source": profile["source"],
+        "statutory_basis": profile["basis"],
+        "matched_terms": matched_terms,
+        "source_matches": source_matches,
+        "source_status": source_status,
+        "retrieval": "legal_framework_keywords",
+    }
 
 
 def groq_call(system: str, prompt: str) -> str | None:
@@ -133,29 +285,31 @@ def build_graph():
     def extract(state: GraphState):
         text = state["text"]
         evidence = state["retrieval"].get("evidence", "")
-        summary = "O texto foi preparado e comparado com o corpus CUAD."
-        return {"steps": [make_step("extract_clauses", "Ingestão e extração de cláusulas", summary, "LOW", 0, {"raw_clause_quote": text[:1000], "extracted_entities": [], "clause_count": len(segment_contract(text)), "cuad_category_matched": state["category"]}, [], annotation("extract_clauses", summary, text, "Anotação simulada: o texto foi preparado pelo serviço LangGraph Python."), audit(summary, evidence))]}
+        framework = state["retrieval"].get("category", state["category"])
+        summary = f"O texto foi preparado e comparado com o referencial selecionado: {framework}."
+        return {"steps": [make_step("extract_clauses", "Ingestão e extração de cláusulas", summary, "LOW", 0, {"raw_clause_quote": text[:1000], "extracted_entities": [], "clause_count": len(segment_contract(text)), "cuad_category_matched": framework, "statutory_basis": state["retrieval"].get("statutory_basis"), "state_variables": {"source_url": state["retrieval"].get("source"), "source_status": state["retrieval"].get("source_status", "local-corpus")}}, [], annotation("extract_clauses", summary, text, "Anotação local: o texto foi preparado pelo serviço LangGraph Python."), audit(summary, evidence))]}
 
     def classify(state: GraphState):
         result = state["retrieval"]
         score = int(result.get("score", 20))
         risk = level(score)
-        summary = f"A recuperação vetorial encontrou a categoria CUAD '{result.get('category')}' com similaridade {result.get('similarity', 0):.2f}."
-        return {"risk_score": score, "risk_level": risk, "classification": f"{risk}: {result.get('category')}", "steps": [make_step("classify_risk", f"Classificação de risco: {risk}", summary, risk, 50, {"cuad_category_matched": result.get("category"), "confidence_metric": result.get("similarity", 0), "raw_clause_quote": result.get("evidence", ""), "state_variables": {"source_document": result.get("source"), "retrieval": "tfidf_cosine"}}, [{"id": "alt-risk-1", "hypothesis": "Classificar sem evidência CUAD", "rejection_reason": "A classificação deve permanecer ligada à evidência recuperada.", "confidence_score": 0.1}], annotation("classify_risk", summary, state["text"], "Anotação simulada: a classificação foi ligada à evidência recuperada."), audit(summary, result.get("evidence", "")))]}
+        retrieval_name = result.get("retrieval", "tfidf_cosine")
+        summary = f"A análise foi enquadrada no referencial '{result.get('category')}', com correspondência de {result.get('similarity', 0):.2f} ao texto submetido."
+        return {"risk_score": score, "risk_level": risk, "classification": f"{risk}: {result.get('category')}", "steps": [make_step("classify_risk", f"Classificação de risco: {risk}", summary, risk, 50, {"cuad_category_matched": result.get("category"), "confidence_metric": result.get("similarity", 0), "raw_clause_quote": result.get("evidence", ""), "statutory_basis": result.get("statutory_basis"), "state_variables": {"source_document": result.get("source"), "retrieval": retrieval_name, "matched_terms": result.get("matched_terms", [])}}, [{"id": "alt-risk-1", "hypothesis": "Classificar sem o referencial jurídico selecionado", "rejection_reason": "A classificação deve permanecer ligada à categoria jurídica escolhida e à evidência disponível.", "confidence_score": 0.1}], annotation("classify_risk", summary, state["text"], "Anotação local: a classificação foi ligada ao referencial jurídico selecionado."), audit(summary, result.get("evidence", "")))]}
 
     def precedent(state: GraphState):
-        summary = "A evidência recuperada foi apresentada como referência para revisão humana, sem assumir validade jurídica automática."
-        return {"steps": [make_step("check_precedent", "Consulta de precedentes e referências", summary, state.get("risk_level", "LOW"), 75, {"cuad_category_matched": state["retrieval"].get("category"), "raw_clause_quote": state["retrieval"].get("evidence", ""), "state_variables": {"source_document": state["retrieval"].get("source")}}, [], annotation("check_precedent", summary, state["text"], "Anotação simulada: a evidência foi apresentada como referência."), audit(summary, state["retrieval"].get("evidence", "")))]}
+        summary = "O referencial jurídico selecionado foi apresentado como fonte para revisão humana, sem assumir validade jurídica automática."
+        return {"steps": [make_step("check_precedent", "Consulta de referências jurídicas", summary, state.get("risk_level", "LOW"), 75, {"cuad_category_matched": state["retrieval"].get("category"), "raw_clause_quote": state["retrieval"].get("evidence", ""), "statutory_basis": state["retrieval"].get("statutory_basis"), "state_variables": {"source_document": state["retrieval"].get("source")}}, [], annotation("check_precedent", summary, state["text"], "Anotação local: a fonte selecionada foi apresentada como referência."), audit(summary, state["retrieval"].get("evidence", "")))]}
 
     def faithfulness(state: GraphState):
-        summary = "A auditoria verificou a ligação entre o resultado, a evidência CUAD e o texto submetido."
+        summary = "A auditoria verificou a ligação entre o resultado, o referencial jurídico selecionado e o texto submetido."
         result = audit(summary, state["retrieval"].get("evidence", ""))
         return {"faithfulness": result, "steps": [make_step("faithfulness_audit", "Auditoria de fidelidade", summary, state.get("risk_level", "LOW"), 75, {"audit_target": "evidência CUAD e narrativa"}, [], annotation("faithfulness_audit", summary, state["text"], "Anotação simulada: a auditoria comparou narrativa e evidência."), result)]}
 
     def verdict(state: GraphState):
         summary = "A recomendação é um apoio à revisão humana baseado na evidência recuperada; não constitui aconselhamento jurídico."
         verdict_data = {"risk_score": state.get("risk_score", 20), "classification": state.get("classification", "Sem classificação"), "summary": summary, "eu_ai_act_risk_tier": "High Risk" if state.get("risk_score", 20) >= 65 else "Limited Risk", "recommended_clauses": ["Confirmar o âmbito, a duração e a reciprocidade da disposição."], "mitigation_guidance": "Validar a evidência e a recomendação com revisão humana qualificada."}
-        return {"verdict": verdict_data, "steps": [make_step("verdict_synthesis", "Síntese do veredito e recomendação", summary, state.get("risk_level", "LOW"), 100, {"final_verdict": verdict_data}, [], annotation("verdict_synthesis", summary, state["text"], "Anotação simulada: a recomendação foi sintetizada para revisão humana."), state.get("faithfulness", audit(summary, state["retrieval"].get("evidence", ""))))]}
+        return {"verdict": verdict_data, "steps": [make_step("verdict_synthesis", "Síntese do veredito e recomendação", summary, state.get("risk_level", "LOW"), 100, {"final_verdict": verdict_data, "statutory_basis": state["retrieval"].get("statutory_basis")}, [], annotation("verdict_synthesis", summary, state["text"], "Anotação local: a recomendação foi sintetizada para revisão humana."), state.get("faithfulness", audit(summary, state["retrieval"].get("evidence", ""))))]}
 
     graph.add_node("extract_clauses", extract)
     graph.add_node("classify_risk", classify)
@@ -172,12 +326,14 @@ def build_graph():
 
 
 def invoke_graph(title: str, category: str, text: str) -> dict[str, Any]:
-    return build_graph().invoke({"title": title, "category": category, "text": text, "retrieval": retrieve_cuad(text), "steps": []})
+    retrieval = retrieve_legal_framework(text, category)
+    return build_graph().invoke({"title": title, "category": category, "text": text, "retrieval": retrieval, "steps": []})
 
 
 def make_trace(title: str, category: str, text: str, result: dict[str, Any], trace_suffix: str = "") -> dict[str, Any]:
     trace_id = f"py-langgraph-{abs(hash((title, text)))}{trace_suffix}"
-    return {"trace_id": trace_id, "contract_title": title, "category": category, "cuad_master_category": category, "parties": [], "governing_law": "A determinar por revisão humana", "contract_excerpt": text[:500], "target_query": f"Avaliar o texto submetido nas categorias: {category}", "steps": result.get("steps", []), "final_verdict": result.get("verdict", {}), "metadata": {"created_at": "", "model_orchestrator": "langgraph-python", "secondary_auditor_model": "groq" if os.getenv("GROQ_API_KEY") else "local-validation-fallback", "cuad_version": "local-corpus-tfidf"}}
+    retrieval = result.get("retrieval", {})
+    return {"trace_id": trace_id, "contract_title": title, "category": category, "cuad_master_category": category, "parties": [], "governing_law": retrieval.get("category", "A determinar por revisão humana"), "contract_excerpt": text[:500], "target_query": f"Avaliar o texto submetido nas categorias: {category}", "steps": result.get("steps", []), "final_verdict": result.get("verdict", {}), "metadata": {"created_at": "", "model_orchestrator": "langgraph-python", "secondary_auditor_model": "groq" if os.getenv("GROQ_API_KEY") else "local-validation-fallback", "cuad_version": "local-corpus-tfidf", "data_provenance": "live-analysis" if os.getenv("GROQ_API_KEY") else "local-analysis", "legal_source_url": retrieval.get("source"), "legal_source_name": retrieval.get("category"), "legal_source_status": retrieval.get("source_status", "local-corpus")}}
 
 
 def analyze(payload: dict[str, Any]) -> dict[str, Any]:

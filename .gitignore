@@ -21,6 +21,7 @@ node_modules/
 dist-ssr/
 *.local
 .vite/
+.cache/
 .env
 .env.local
 .env.*.local
