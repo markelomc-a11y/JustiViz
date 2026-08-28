@@ -122,13 +122,17 @@ def load_cached_legal_text(profile: dict[str, Any]) -> tuple[str, str]:
         except OSError:
             pass
 
-    request = urllib.request.Request(
-        profile["source"],
-        headers={"User-Agent": "JustiViz/1.0 academic legal-source retriever"},
-    )
     try:
-        with urllib.request.urlopen(request, timeout=LEGAL_SOURCE_TIMEOUT_SECONDS) as response:
-            text = parse_legal_html(response.read())
+        texts = []
+        sources = (profile["source"], *profile.get("additional_sources", ()))
+        for source in sources:
+            request = urllib.request.Request(
+                source,
+                headers={"User-Agent": "JustiViz/1.0 academic legal-source retriever"},
+            )
+            with urllib.request.urlopen(request, timeout=LEGAL_SOURCE_TIMEOUT_SECONDS) as response:
+                texts.append(parse_legal_html(response.read()))
+        text = "\n\n".join(texts)
         if len(text) < 40:
             raise ValueError("official source returned insufficient readable text")
         LEGAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -177,14 +181,15 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "match": ("código civil", "dl 446/85", "lccg", "indemnização", "responsabilidade"),
         "name": "Código Civil Português e DL 446/85 (LCCG)",
         "basis": "Código Civil Português e Decreto-Lei n.º 446/85 (LCCG), nomeadamente os artigos 236.º, 280.º, 405.º, 762.º e 809.º",
-        "source": "https://diariodarepublica.pt/legislacao-consolidada",
+        "source": "https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-lei/1966-47344",
+        "additional_sources": ("https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-lei/1985-446",),
         "terms": ("contrato", "obrigação", "responsabilidade", "indemnização", "culpa", "boa-fé", "cláusula"),
     },
     {
         "match": ("código do trabalho", "não-concorrência", "não concorrência", "laboral"),
         "name": "Código do Trabalho Português",
         "basis": "Código do Trabalho Português, nomeadamente os artigos 136.º e 137.º",
-        "source": "https://diariodarepublica.pt/legislacao-consolidada",
+        "source": "https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2009-7",
         "terms": ("trabalhador", "empregador", "cessação", "não concorrência", "compensação", "atividade concorrente"),
     },
     {
@@ -226,12 +231,19 @@ def groq_call(system: str, prompt: str) -> str | None:
     key = os.getenv("GROQ_API_KEY")
     if not key:
         return None
-    payload = json.dumps({"model": GROQ_MODEL, "temperature": 0.1, "max_tokens": 240, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}).encode()
+    payload = json.dumps({"model": GROQ_MODEL, "temperature": 0.1, "max_tokens": 512, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}).encode()
     request = urllib.request.Request(GROQ_URL, data=payload, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
     try:
         with urllib.request.urlopen(request, timeout=25) as response:
             body = json.loads(response.read().decode())
-        return body["choices"][0]["message"]["content"].strip()
+        choice = body.get("choices", [{}])[0]
+        message = choice.get("message", {})
+        content = (message.get("content") or "").strip()
+        if not content:
+            finish_reason = choice.get("finish_reason", "unknown")
+            print(f"Groq returned no visible content (finish_reason={finish_reason})", file=sys.stderr)
+            return None
+        return content
     except urllib.error.HTTPError as error:
         try:
             details = error.read().decode("utf-8", errors="replace")[:500]
