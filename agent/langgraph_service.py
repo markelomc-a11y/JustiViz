@@ -7,6 +7,7 @@ and validation remain available when no key is configured.
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import operator
@@ -32,6 +33,7 @@ LEGAL_CACHE_TTL_SECONDS = int(os.getenv("LEGAL_SOURCE_CACHE_TTL_HOURS", "168")) 
 LEGAL_SOURCE_TIMEOUT_SECONDS = float(os.getenv("LEGAL_SOURCE_TIMEOUT_SECONDS", "8"))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_DIAGNOSTIC: dict[str, Any] = {"configured": False, "last_status": "not-called"}
 
 
 def load_corpus() -> list[dict[str, Any]]:
@@ -230,7 +232,19 @@ def retrieve_legal_framework(text: str, category: str) -> dict[str, Any]:
 def groq_call(system: str, prompt: str) -> str | None:
     key = os.getenv("GROQ_API_KEY")
     if not key:
+        GROQ_DIAGNOSTIC.update({"configured": False, "last_status": "missing-key", "model": GROQ_MODEL})
+        print(f"Groq skipped: GROQ_API_KEY is missing (model={GROQ_MODEL})", file=sys.stderr)
         return None
+    key_fingerprint = hashlib.sha256(key.encode()).hexdigest()[:12]
+    GROQ_DIAGNOSTIC.update({
+        "configured": True,
+        "model": GROQ_MODEL,
+        "endpoint": GROQ_URL,
+        "key_length": len(key),
+        "key_fingerprint": key_fingerprint,
+        "last_status": "requesting",
+    })
+    print(f"Groq request: model={GROQ_MODEL} prompt_chars={len(prompt)} key_length={len(key)} key_fingerprint={key_fingerprint}", file=sys.stderr)
     payload = json.dumps({"model": GROQ_MODEL, "temperature": 0.1, "max_tokens": 512, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]}).encode()
     request = urllib.request.Request(GROQ_URL, data=payload, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"}, method="POST")
     try:
@@ -241,18 +255,24 @@ def groq_call(system: str, prompt: str) -> str | None:
         content = (message.get("content") or "").strip()
         if not content:
             finish_reason = choice.get("finish_reason", "unknown")
+            GROQ_DIAGNOSTIC.update({"last_status": "empty-response", "finish_reason": finish_reason})
             print(f"Groq returned no visible content (finish_reason={finish_reason})", file=sys.stderr)
             return None
+        GROQ_DIAGNOSTIC.update({"last_status": "ok", "finish_reason": choice.get("finish_reason")})
+        print(f"Groq response: status=200 finish_reason={choice.get('finish_reason', 'unknown')} content_chars={len(content)}", file=sys.stderr)
         return content
     except urllib.error.HTTPError as error:
         try:
             details = error.read().decode("utf-8", errors="replace")[:500]
         except Exception:
             details = "no response body"
-        print(f"Groq request unavailable: HTTP {error.code}: {details}", file=sys.stderr)
+        request_id = error.headers.get("x-request-id") or error.headers.get("cf-ray") or "none"
+        GROQ_DIAGNOSTIC.update({"last_status": f"http-{error.code}", "http_status": error.code, "request_id": request_id, "provider_error": details})
+        print(f"Groq request unavailable: HTTP {error.code} request_id={request_id} model={GROQ_MODEL} body={details}", file=sys.stderr)
         return None
     except Exception as error:
-        print(f"Groq request unavailable: {error}", file=sys.stderr)
+        GROQ_DIAGNOSTIC.update({"last_status": "transport-error", "transport_error": str(error)[:300]})
+        print(f"Groq request unavailable: transport_error={error} model={GROQ_MODEL}", file=sys.stderr)
         return None
 
 
@@ -380,7 +400,7 @@ def analyze(payload: dict[str, Any]) -> dict[str, Any]:
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
-            self.respond(200, {"status": "ok", "langgraph": True, "groq": bool(os.getenv("GROQ_API_KEY")), "cuad_examples": len(CORPUS)})
+            self.respond(200, {"status": "ok", "langgraph": True, "groq": bool(os.getenv("GROQ_API_KEY")), "groq_diagnostic": GROQ_DIAGNOSTIC, "cuad_examples": len(CORPUS)})
         else:
             self.respond(404, {"error": "Not found"})
 

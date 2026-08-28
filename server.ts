@@ -99,6 +99,7 @@ app.get("/api/health", async (_req, res) => {
       status: "ok",
       hasLangGraph: true,
       groq: Boolean(serviceHealth.groq),
+      groqDiagnostic: serviceHealth.groq_diagnostic,
       cuadExamples: serviceHealth.cuad_examples,
       timestamp: new Date().toISOString(),
     });
