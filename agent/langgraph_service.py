@@ -32,7 +32,7 @@ LEGAL_CACHE_DIR = Path(os.getenv("LEGAL_SOURCE_CACHE_DIR", str(ROOT / ".cache" /
 LEGAL_CACHE_TTL_SECONDS = int(os.getenv("LEGAL_SOURCE_CACHE_TTL_HOURS", "168")) * 60 * 60
 LEGAL_SOURCE_TIMEOUT_SECONDS = float(os.getenv("LEGAL_SOURCE_TIMEOUT_SECONDS", "8"))
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 GROQ_DIAGNOSTIC: dict[str, Any] = {"configured": False, "last_status": "not-called"}
 
 
