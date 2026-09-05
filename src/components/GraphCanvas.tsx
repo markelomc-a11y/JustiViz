@@ -163,25 +163,9 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     const nodes: LayoutNode[] = [];
     const links: LayoutLink[] = [];
 
-    // Root Contract Ingestion Node
-    nodes.push({
-      id: 'root-contract',
-      title: 'Ingestão Contratual',
-      subtitle: trace.contract_title.slice(0, 32) + '...',
-      x: spineX,
-      y: startY,
-      isSpine: true,
-      isAlternative: false,
-      isActive: true,
-      isPast: true,
-      riskLevel: 'LOW',
-      isCritical: false,
-      isFaithful: true,
-    });
-
     // Primary steps & branches
     trace.steps.forEach((step, idx) => {
-      const stepY = startY + (idx + 1) * stepSpacingY;
+      const stepY = startY + idx * stepSpacingY;
       const isPast = idx <= currentStepIndex;
       const isActive = idx === currentStepIndex;
 
@@ -202,16 +186,17 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         isFaithful: step.faithfulness_metadata.is_faithful,
       });
 
-      // Link from previous spine node
-      const prevY = idx === 0 ? startY : startY + idx * stepSpacingY;
-      links.push({
-        sourceX: spineX,
-        sourceY: prevY,
-        targetX: spineX,
-        targetY: stepY,
-        isAlternative: false,
-        isActive: isPast,
-      });
+      // Link consecutive narrative steps; the first step is the graph origin.
+      if (idx > 0) {
+        links.push({
+          sourceX: spineX,
+          sourceY: stepY - stepSpacingY,
+          targetX: spineX,
+          targetY: stepY,
+          isAlternative: false,
+          isActive: isPast,
+        });
+      }
 
       // Rejected Alternative Branches (Forked Paths)
       if (showAlternatives && step.alternatives && step.alternatives.length > 0) {
@@ -370,7 +355,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           .attr('fill', colors.text)
           .attr('font-size', '10px')
           .attr('font-weight', 'bold')
-          .text(node.id === 'root-contract' ? '0' : node.title.split('.')[0] || '1');
+          .text(node.title.split('.')[0] || '1');
 
         // Node Title Text
         nodeG.append('text')

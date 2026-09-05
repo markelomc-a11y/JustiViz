@@ -91,6 +91,10 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const getNodeDisplayName = (nodeName: string) => {
     const localizedNames: Record<string, string> = {
       extract_clauses: 'Extração de Cláusulas',
+      classify_risk: 'Classificação de Risco',
+      check_precedent: 'Consulta de Precedentes',
+      faithfulness_audit: 'Auditoria de Fidelidade',
+      verdict_synthesis: 'Síntese do Veredito',
       risk_assessment: 'Avaliação de Risco',
       legal_reasoning: 'Raciocínio Jurídico',
       final_verdict: 'Veredito Final',
