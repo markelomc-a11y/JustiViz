@@ -157,9 +157,10 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
               ? 'border-indigo-600 text-indigo-600 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
+          title="Raciocínio do agente: hipóteses consideradas e rejeitadas"
         >
           <GitFork className="w-3.5 h-3.5" />
-          <span>Hipóteses Rejeitadas ({step.alternatives.length})</span>
+          <span>Raciocínio IA • {step.alternatives.length} alternativas</span>
         </button>
 
         <button
@@ -313,10 +314,16 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
         {/* TAB 3: FORKED PATHS (REJECTED ALTERNATIVES) */}
         {activeTab === 'alternatives' && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-              <p>
-                <strong className="text-slate-800 font-semibold">Por que razão são apresentadas hipóteses rejeitadas?</strong> Seguindo os princípios de explicabilidade XAI, o JustiViz apresenta as hipóteses alternativas avaliadas e descartadas pelo agente, permitindo aos juristas auditar os limites e critérios da decisão.
-              </p>
+            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-lg leading-none mt-0.5">🤖</span>
+                <div>
+                  <p className="font-bold text-slate-900">Raciocínio do Agente IA</p>
+                  <p className="text-indigo-800 mt-1 leading-relaxed">
+                    O agente LangGraph gerou e explicitamente rejeitou as alternativas abaixo durante seu processo de raciocínio jurídico. Estas <strong>NÃO são dados reais</strong>, mas demonstram como o agente considerou múltiplas interpretações antes de chegar à decisão final. Isto oferece transparência em relação aos limites e critérios de decisão.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <VirtualizedAlternatives alternatives={step.alternatives} />
