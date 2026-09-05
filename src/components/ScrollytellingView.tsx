@@ -458,7 +458,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
         {/* Left Column: Scrollytelling Narrative Story Cards */}
         <div 
           ref={scrollContainerRef}
-          className="lg:col-span-4 space-y-4"
+          className="lg:col-span-4 space-y-4 lg:sticky lg:top-24 self-start"
           aria-label="Área de navegação por scrollytelling"
         >
           <div className="p-5 sm:p-6 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4 relative overflow-hidden transition-all duration-300">
