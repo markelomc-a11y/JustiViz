@@ -1,9 +1,54 @@
-import { ContractClause, ContractTrace, TraceStep, RiskLevel } from '../types';
+import { ClauseAssessment, ContractClause, ContractTrace, LegalFinding, TraceStep, RiskLevel } from '../types';
 
 interface GeneratePtTraceOptions {
   contractTitle: string;
   category: string;
   contractText: string;
+}
+
+function buildLocalAssessment(text: string, category: string, riskScore: number, riskLevel: RiskLevel): ClauseAssessment {
+  const normalized = text.toLowerCase();
+  const contractExcerpt = text.replace(/\s+/g, ' ').trim().slice(0, 700);
+  const findings: LegalFinding[] = [];
+  const add = (article: string, severity: LegalFinding['severity'], relationship: LegalFinding['relationship'], explanation: string) => {
+    findings.push({
+      article,
+      legal_reference: category,
+      legal_excerpt: 'Critério legal configurado no perfil jurídico selecionado.',
+      contract_excerpt: contractExcerpt,
+      relationship,
+      severity,
+      explanation,
+      confidence: severity === 'strong' ? 0.86 : severity === 'slight' ? 0.64 : 0.55,
+    });
+  };
+
+  if (category.toLowerCase().includes('rgpd') && /\b(?:45|30|15)\s+dias/.test(normalized)) {
+    add('Artigo 33.º do RGPD', 'strong', 'contradicts', 'O prazo identificado excede o prazo máximo previsto para a notificação à autoridade de controlo.');
+  } else if ((category.toLowerCase().includes('trabalho') || category.toLowerCase().includes('concorrência')) && (/\b(?:60\s+meses|5\s+anos)\b/.test(normalized) || normalized.includes('gratuit'))) {
+    add('Artigo 136.º do Código do Trabalho', 'strong', 'contradicts', 'O prazo ou a ausência de compensação indicada exige revisão face aos requisitos do pacto de não concorrência.');
+  } else if ((category.toLowerCase().includes('lccg') || category.toLowerCase().includes('indemnização')) && /ilimitad|sem limite|não se aplica/.test(normalized)) {
+    add('Artigos 280.º, 762.º e 809.º do Código Civil; DL n.º 446/85 (LCCG)', 'strong', 'contradicts', 'A responsabilidade ilimitada exige revisão face aos limites imperativos e ao equilíbrio contratual.');
+  } else {
+    add('Referencial jurídico selecionado', riskLevel === 'LOW' ? 'none' : 'slight', riskLevel === 'LOW' ? 'supports' : 'unclear', riskLevel === 'LOW' ? 'Não foram detetadas contradições materiais pelos critérios locais disponíveis.' : 'Foram detetados sinais que exigem confirmação por revisão jurídica profissional.');
+  }
+
+  const strongestSeverity = findings.some((finding) => finding.severity === 'strong')
+    ? 'strong'
+    : findings.some((finding) => finding.severity === 'slight')
+      ? 'slight'
+      : 'none';
+  const assessedLevel: RiskLevel = strongestSeverity === 'strong' ? 'HIGH' : strongestSeverity === 'slight' ? 'MEDIUM' : riskLevel;
+  const assessedScore = strongestSeverity === 'strong' ? 85 : strongestSeverity === 'slight' ? 55 : riskScore;
+
+  return {
+    classification: assessedLevel,
+    risk_score: assessedScore,
+    findings,
+    uncertainty_notes: ['A avaliação local usa regras de contingência e não substitui a revisão jurídica profissional.'],
+    requires_professional_review: assessedLevel !== 'LOW',
+    legal_source_status: 'local-fallback',
+  };
 }
 
 export function generateStaticTracePt({
@@ -424,13 +469,27 @@ export function buildClauseTraceSetPt({
       },
     };
 
+    const assessment = buildLocalAssessment(clauseText, category, enrichedTrace.final_verdict.risk_score, enrichedTrace.steps[2]?.risk_level || 'MEDIUM');
+    enrichedTrace.assessment = assessment;
+
     enrichedTrace.steps = enrichedTrace.steps.map((step, stepIdx) => ({
       ...step,
       step_id: `${step.step_id}-clause-${clauseNumber}`,
       title: stepIdx === 0 ? clauseTitle : step.title,
+      summary: step.node_name === 'check_precedent'
+        ? `Foram usados ${assessment.findings.map((finding) => finding.article).join(', ')} para comparar a cláusula com o referencial selecionado.`
+        : step.node_name === 'classify_risk'
+          ? `A cláusula foi classificada como ${assessment.classification} (${assessment.risk_score}/100) com base na evidência disponível.`
+          : step.node_name === 'faithfulness_audit'
+            ? `A auditoria comparou a classificação com o excerto contratual e as referências utilizadas; confiança medida: ${Math.round(step.faithfulness_metadata.faithfulness_score * 100)}%.`
+            : step.node_name === 'verdict_synthesis'
+              ? `Veredito fundamentado: ${assessment.classification} (${assessment.risk_score}/100). ${assessment.findings[0]?.explanation || ''}`
+              : step.summary,
       payload: {
         ...step.payload,
         raw_clause_quote: clauseText.slice(0, 1000),
+        legal_findings: assessment.findings,
+        clause_assessment: assessment,
       },
     }));
 
@@ -450,8 +509,24 @@ export function buildClauseTraceSetPt({
   });
 
   const primaryTrace = clauseTraceEntries[0]?.trace || generateStaticTracePt({ contractTitle, category, contractText: text });
+  const clauseScores = clauseTraceEntries.map((entry) => entry.trace?.assessment?.risk_score ?? 55);
+  const clauseLevels = clauseTraceEntries.map((entry) => entry.trace?.assessment?.classification ?? 'MEDIUM');
+  const aggregateScore = Math.round(clauseScores.reduce((total, score) => total + score, 0) / Math.max(clauseScores.length, 1));
+  const aggregateLevel = clauseLevels.includes('CRITICAL')
+    ? 'CRITICAL'
+    : clauseLevels.includes('HIGH')
+      ? 'HIGH'
+      : clauseLevels.includes('MEDIUM')
+        ? 'MEDIUM'
+        : 'LOW';
   return {
     ...primaryTrace,
     clauses: clauseTraceEntries,
+    final_verdict: {
+      ...primaryTrace.final_verdict,
+      risk_score: aggregateScore,
+      classification: `${aggregateLevel}: avaliação agregada de ${clauseTraceEntries.length} cláusula(s)`,
+      summary: `Avaliação agregada do contrato: ${aggregateLevel} (${aggregateScore}/100), calculada a partir da média das classificações das cláusulas e da prevalência do risco mais grave.`,
+    },
   };
 }

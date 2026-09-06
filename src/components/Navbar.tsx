@@ -27,7 +27,6 @@ interface NavbarProps {
   onSelectTrace: (traceId: string) => void;
   zoomLevel: ZoomLevel;
   onToggleZoom: (zoom: ZoomLevel) => void;
-  fps: number;
   onOpenHelp: () => void;
   onResetSession?: () => void;
 }
@@ -40,7 +39,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTrace,
   zoomLevel,
   onToggleZoom,
-  fps,
   onOpenHelp,
   onResetSession,
 }) => {
@@ -131,15 +129,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Zap className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Micro</span>
               </button>
-            </div>
-
-            {/* 60 FPS Fluidity Monitor */}
-            <div 
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs"
-              title="Desempenho de renderização a 60 FPS via requestAnimationFrame"
-            >
-              <span className={`w-2 h-2 rounded-full ${fps >= 55 ? 'bg-emerald-500' : fps >= 40 ? 'bg-amber-500' : 'bg-rose-500'}`} />
-              <span className="font-mono font-semibold text-slate-700">{Math.round(fps)} FPS</span>
             </div>
 
             {onResetSession && (

@@ -593,7 +593,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
               </div>
             </div>
 
-            {showTechnicalDetails && (
+            {showTechnicalDetails && zoomLevel === 'micro' && (
               <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
                 <div className="border-b border-slate-100 pb-3">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Detalhe técnico</p>
@@ -662,6 +662,22 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     </div>
                   </div>
 
+                  {activeStep.payload.legal_findings && activeStep.payload.legal_findings.length > 0 && (
+                    <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 space-y-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-700">Referências e contradições avaliadas</p>
+                      {activeStep.payload.legal_findings.map((finding, index) => (
+                        <div key={`${finding.article}-${index}`} className="rounded-md border border-indigo-100 bg-white p-2 space-y-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <strong className="text-[11px] text-slate-800">{finding.article}</strong>
+                            <span className="text-[10px] font-semibold text-indigo-700">{finding.relationship} · {finding.severity}</span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-slate-700">{finding.explanation}</p>
+                          {finding.source_url && <a className="text-[10px] text-indigo-700 underline" href={finding.source_url} target="_blank" rel="noreferrer">Fonte oficial</a>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
                     <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Auditoria de fidelidade ({getTraceProvenanceLabel(trace).toLowerCase()})</p>
                     <p className="text-[11px] leading-relaxed text-slate-700">
@@ -694,10 +710,10 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                Regulamento IA UE: {activeClauseTrace.final_verdict.eu_ai_act_risk_tier}
+                Regulamento IA UE: {trace.final_verdict.eu_ai_act_risk_tier}
               </span>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Índice de Risco: {activeClauseTrace.final_verdict.risk_score}/100
+                Índice de Risco: {trace.final_verdict.risk_score}/100
               </span>
             </div>
           </div>
@@ -711,7 +727,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 {activeClauseTrace.final_verdict.classification}
               </p>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {activeClauseTrace.final_verdict.summary}
+                {trace.final_verdict.summary}
               </p>
             </div>
 
@@ -720,7 +736,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 Ações de Revisão Recomendadas
               </h3>
               <ul className="space-y-1.5 text-xs text-slate-700">
-                {activeClauseTrace.final_verdict.recommended_clauses.map((clause, idx) => (
+                  {trace.final_verdict.recommended_clauses.map((clause, idx) => (
                   <li key={idx} className="flex items-start gap-1.5">
                     <span className="text-emerald-600 font-bold">✓</span>
                     <span>{clause}</span>

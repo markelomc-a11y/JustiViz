@@ -33,6 +33,27 @@ export interface FaithfulnessMetadata {
   last_verified_timestamp?: string;
 }
 
+export interface LegalFinding {
+  article: string;
+  legal_reference: string;
+  source_url?: string;
+  legal_excerpt: string;
+  contract_excerpt: string;
+  relationship: 'supports' | 'contradicts' | 'unclear';
+  severity: 'none' | 'slight' | 'strong';
+  explanation: string;
+  confidence: number;
+}
+
+export interface ClauseAssessment {
+  classification: RiskLevel;
+  risk_score: number;
+  findings: LegalFinding[];
+  uncertainty_notes: string[];
+  requires_professional_review: boolean;
+  legal_source_status?: string;
+}
+
 export interface TechnicalPayload {
   raw_clause_quote?: string;
   cuad_category_matched?: string;
@@ -54,6 +75,8 @@ export interface TechnicalPayload {
     holding_summary?: string;
   }[];
   raw_api_response?: Record<string, any>;
+  legal_findings?: LegalFinding[];
+  clause_assessment?: ClauseAssessment;
 }
 
 export interface TraceStep {
@@ -107,6 +130,7 @@ export interface ContractTrace {
   target_query: string;
   steps: TraceStep[];
   final_verdict: FinalVerdict;
+  assessment?: ClauseAssessment;
   clauses?: ContractClause[];
   reliance_profile?: RelianceProfile;
   metadata?: {

@@ -12,7 +12,6 @@ import { ScrollytellingView } from './components/ScrollytellingView';
 import { RelianceLab } from './components/RelianceLab';
 import { CustomContractAnalyzer } from './components/CustomContractAnalyzer';
 import { MethodologyHelpModal } from './components/MethodologyHelpModal';
-import { calculateFps } from './utils/fps';
 
 const ALL_INITIAL_CASE_STUDIES: ContractTrace[] = [
   ...PT_CASE_STUDIES,
@@ -26,7 +25,6 @@ export default function App() {
   const [zoomLevel, setZoomLevel] = useState<ZoomLevel>('macro');
   const [selectedStep, setSelectedStep] = useState<TraceStep | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState<boolean>(false);
-  const [fps, setFps] = useState<number>(60);
 
   const resetSession = () => {
     setCaseStudies(ALL_INITIAL_CASE_STUDIES);
@@ -35,26 +33,6 @@ export default function App() {
     setSelectedStep(null);
     setZoomLevel('macro');
   };
-
-  // Measure dynamic render frame rate (60 FPS test)
-  useEffect(() => {
-    let frameCount = 0;
-    let lastTime = performance.now();
-    let animId: number;
-
-    const sampleFrame = (now: number) => {
-      frameCount++;
-      if (now - lastTime >= 1000) {
-        setFps(calculateFps(frameCount, now - lastTime));
-        frameCount = 0;
-        lastTime = now;
-      }
-      animId = requestAnimationFrame(sampleFrame);
-    };
-
-    animId = requestAnimationFrame(sampleFrame);
-    return () => cancelAnimationFrame(animId);
-  }, []);
 
   const currentTrace = caseStudies.find(t => t.trace_id === selectedTraceId) || caseStudies[0];
 
@@ -83,7 +61,6 @@ export default function App() {
         onSelectTrace={setSelectedTraceId}
         zoomLevel={zoomLevel}
         onToggleZoom={setZoomLevel}
-        fps={fps}
         onOpenHelp={() => setIsHelpOpen(true)}
         onResetSession={resetSession}
       />
