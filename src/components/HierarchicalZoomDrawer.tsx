@@ -65,6 +65,15 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
     }
   };
 
+  const showsClauseClassification = ['classify_risk', 'check_precedent', 'verdict_synthesis'].includes(step.node_name);
+  const getFaithfulnessBadge = () => (
+    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+      Fidelidade: {typeof step.faithfulness_metadata.faithfulness_score === 'number'
+        ? `${Math.round(step.faithfulness_metadata.faithfulness_score * 100)}%`
+        : 'N/D'}
+    </span>
+  );
+
   return (
     <div 
       id="hierarchical-zoom-drawer" 
@@ -77,7 +86,11 @@ export const HierarchicalZoomDrawer: React.FC<HierarchicalZoomDrawerProps> = ({
             <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 font-bold">
               {step.node_name}
             </span>
-            {getRiskBadge(step.risk_level)}
+            {step.node_name === 'faithfulness_audit'
+              ? getFaithfulnessBadge()
+              : showsClauseClassification
+                ? getRiskBadge(step.payload.clause_assessment?.classification || step.risk_level)
+                : null}
             {step.is_critical_node && (
               <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                 ★ Decisão Crítica

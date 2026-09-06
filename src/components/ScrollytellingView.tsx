@@ -92,6 +92,8 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const clauseAssessment = activeClauseTrace.assessment
     || steps.find((step) => step.payload?.clause_assessment)?.payload?.clause_assessment;
   const clauseClassification = clauseAssessment?.classification || activeStep?.risk_level;
+  const showsClauseClassification = ['classify_risk', 'check_precedent', 'verdict_synthesis'].includes(selectedStep?.node_name || '');
+  const showsFaithfulness = selectedStep?.node_name === 'faithfulness_audit';
   const formatPercentage = (value: number | undefined) => typeof value === 'number' && Number.isFinite(value)
     ? `${Math.round(value * 100)}%`
     : 'N/D';
@@ -594,9 +596,17 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Nó em foco</p>
                   <h3 className="text-sm font-bold text-slate-900 mt-1">{selectedAlternative ? 'Hipótese rejeitada' : getNodeDisplayName(selectedStep.node_name)}</h3>
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${getRiskColor(selectedStep.risk_level)}`}>
-                  {selectedAlternative ? 'Hipótese rejeitada' : getRiskLabel(clauseClassification)}
-                </span>
+                {selectedAlternative ? (
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-full border text-slate-600 border-slate-300 bg-slate-50">Hipótese rejeitada</span>
+                ) : showsFaithfulness ? (
+                  <span className="text-[10px] font-bold px-2 py-1 rounded-full border text-indigo-700 border-indigo-200 bg-indigo-50">
+                    Fidelidade: {formatPercentage(mockAudit?.faithfulness_score)}
+                  </span>
+                ) : showsClauseClassification ? (
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${getRiskColor(clauseClassification as RiskLevel)}`}>
+                    {getRiskLabel(clauseClassification)}
+                  </span>
+                ) : null}
               </div>
 
               <div className="space-y-3">
@@ -612,9 +622,11 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                       {explanationSource === 'groq' ? 'Groq' : 'Anotação local'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800">Classificação: {getRiskLabel(clauseClassification)}</span>
-                  </div>
+                  {!showsFaithfulness && showsClauseClassification && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800">Classificação: {getRiskLabel(clauseClassification)}</span>
+                    </div>
+                  )}
                   <p className="text-[12px] leading-relaxed text-indigo-950">{generatedExplanation}</p>
                 </div>
               </div>

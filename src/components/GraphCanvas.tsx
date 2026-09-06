@@ -45,7 +45,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const [activeTab, setActiveTab] = useState<'graph' | 'legend'>('graph');
 
   // Colors and styling constants
-  const getRiskColor = (risk: RiskLevel) => {
+  const getRiskColor = (risk?: RiskLevel) => {
+    if (!risk) {
+      return { border: '#64748b', bg: '#1e293b', text: '#cbd5e1', glow: 'rgba(100, 116, 139, 0.25)' };
+    }
     switch (risk) {
       case 'CRITICAL':
         return { border: '#f43f5e', bg: '#881337', text: '#fecdd3', glow: 'rgba(244, 63, 94, 0.4)' };
@@ -142,7 +145,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       isActive: boolean;
       isPast: boolean;
       stepData?: TraceStep;
-      riskLevel: RiskLevel;
+      riskLevel?: RiskLevel;
       isCritical: boolean;
       isFaithful: boolean;
       confidence?: number;
@@ -170,6 +173,10 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       const isActive = idx === currentStepIndex;
 
       // Spine primary node
+      const displaysClauseRisk = ['classify_risk', 'check_precedent', 'verdict_synthesis'].includes(step.node_name);
+      const clauseClassification = trace.assessment?.classification
+        || trace.steps.find((candidate) => candidate.payload?.clause_assessment)?.payload?.clause_assessment?.classification;
+
       nodes.push({
         id: step.step_id,
         title: `${idx + 1}. ${step.title}`,
@@ -181,7 +188,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         isActive,
         isPast,
         stepData: step,
-        riskLevel: step.risk_level,
+        riskLevel: displaysClauseRisk ? clauseClassification || step.risk_level : undefined,
         isCritical: !!step.is_critical_node,
         isFaithful: step.faithfulness_metadata.is_faithful,
       });
