@@ -111,6 +111,18 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
     return labels[value.toLowerCase()] || 'N/D';
   };
 
+  const formatFindingRelationship = (value: string) => ({
+    supports: 'Compatível',
+    contradicts: 'Contradiz',
+    unclear: 'Inconclusivo',
+  }[value] || 'N/D');
+
+  const formatFindingSeverity = (value: string) => ({
+    none: 'Sem contradição',
+    slight: 'Ligeira',
+    strong: 'Forte',
+  }[value] || 'N/D');
+
   const isLongExcerpt = excerptText.length > 220;
   const currentClauseTitle = currentClause ? `${trace.contract_title} - Cláusula ${currentClause.index ?? currentClauseIndex + 1}` : trace.contract_title;
 
@@ -706,7 +718,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                         <div key={`${finding.article}-${index}`} className="rounded-md border border-indigo-100 bg-white p-2 space-y-1">
                           <div className="flex items-center justify-between gap-2">
                             <strong className="text-[11px] text-slate-800">{finding.article}</strong>
-                            <span className="text-[10px] font-semibold text-indigo-700">{finding.relationship} · {finding.severity}</span>
+                            <span className="text-[10px] font-semibold text-indigo-700">{formatFindingRelationship(finding.relationship)} · {formatFindingSeverity(finding.severity)}</span>
                           </div>
                           <p className="text-[11px] leading-relaxed text-slate-700">{finding.explanation}</p>
                           {finding.source_url && <a className="text-[10px] text-indigo-700 underline" href={finding.source_url} target="_blank" rel="noreferrer">Fonte oficial</a>}
@@ -761,7 +773,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 Classificação Executiva
               </h3>
               <p className="text-sm font-semibold text-slate-900">
-                {getClassificationLabel(clauseAssessment?.classification || activeClauseTrace.final_verdict.classification)}
+                {getClassificationLabel(trace.final_verdict.classification)}
               </p>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {trace.final_verdict.summary}

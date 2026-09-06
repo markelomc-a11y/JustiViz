@@ -7,6 +7,7 @@ import {
 } from '../types';
 import { GraphCanvas } from './GraphCanvas';
 import { getTraceProvenanceLabel } from '../utils/dataProvenance';
+import { formatRiskLevel } from '../utils/riskLabels';
 import { 
   GitFork, 
   Filter, 
@@ -78,7 +79,9 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
   };
 
   const filteredSteps = activeClauseTrace.steps.filter((s) => {
-    const matchesRisk = filterRisk === 'ALL' || s.risk_level === filterRisk;
+    const clauseClassification = activeClauseTrace.assessment?.classification
+      || s.payload?.clause_assessment?.classification;
+    const matchesRisk = filterRisk === 'ALL' || clauseClassification === filterRisk;
     const matchesSearch = 
       s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -216,10 +219,10 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
                 className="bg-slate-50 text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
                 <option value="ALL">Todos os Níveis</option>
-                <option value="CRITICAL">Risco Crítico</option>
-                <option value="HIGH">Risco Elevado</option>
-                <option value="MEDIUM">Risco Moderado</option>
-                <option value="LOW">Risco Reduzido</option>
+                <option value="CRITICAL">{formatRiskLevel('CRITICAL')}</option>
+                <option value="HIGH">{formatRiskLevel('HIGH')}</option>
+                <option value="MEDIUM">{formatRiskLevel('MEDIUM')}</option>
+                <option value="LOW">{formatRiskLevel('LOW')}</option>
               </select>
             </div>
 
@@ -332,7 +335,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                              REJEITADO #{altIdx + 1}
+                              Alternativa rejeitada #{altIdx + 1}
                             </span>
                             <span className="text-[10px] font-mono text-slate-500 font-semibold">
                               {Math.round(alt.confidence_score * 100)}%
@@ -344,7 +347,7 @@ export const DigraphExplorerView: React.FC<DigraphExplorerViewProps> = ({
                         </div>
 
                         <div className="p-2.5 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
-                          <strong className="text-amber-700 block text-[10px] uppercase font-bold">Fundamento da Rejeição:</strong>
+                          <strong className="text-amber-700 block text-[10px] uppercase font-bold">Motivo da rejeição:</strong>
                           {alt.rejection_reason}
                         </div>
                       </div>

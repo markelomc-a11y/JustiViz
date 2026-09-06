@@ -351,7 +351,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                     onClick={() => onInspectTraceInScrollytelling(activeCase.trace_id)}
                     className="text-xs text-indigo-600 hover:text-indigo-800 underline font-semibold flex items-center gap-1 cursor-pointer"
                   >
-                    <span>Abrir Vista Scrollytelling 60 FPS</span>
+                    <span>Abrir Vista Scrollytelling</span>
                     <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>

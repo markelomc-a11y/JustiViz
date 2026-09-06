@@ -107,7 +107,7 @@ export default function App() {
             <span className="font-semibold text-slate-700">JustiViz</span>
             <span>• Inteligência Artificial Explicável (XAI) para Raciocínio de Agentes Autónomos</span>
           </div>
-          <span>CUAD real + casos PT demonstrativos simulados • Conformidade com o Regulamento da IA da UE • Arquitetura de Estados LangGraph</span>
+          <span>CUAD real + casos PT de demonstração • Conformidade com o Regulamento da IA da UE • Arquitetura de Estados LangGraph</span>
         </div>
       </footer>
     </div>

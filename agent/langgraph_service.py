@@ -151,7 +151,6 @@ def load_cached_legal_text(profile: dict[str, Any]) -> tuple[str, str]:
 
 
 def legal_evidence(text: str, source_text: str, terms: tuple[str, ...]) -> str:
-    contract_excerpt = (text or "").strip()[:700]
     normalized_source = source_text.lower()
     source_excerpt = ""
     for term in terms:
@@ -159,9 +158,29 @@ def legal_evidence(text: str, source_text: str, terms: tuple[str, ...]) -> str:
         if position >= 0:
             source_excerpt = source_text[max(0, position - 160):position + 360]
             break
-    if source_excerpt:
-        return f"Texto submetido:\n{contract_excerpt}\n\nFonte legal oficial:\n{source_excerpt}"
-    return contract_excerpt
+    return source_excerpt
+
+
+def extract_article_provisions(source_text: str, profile: dict[str, Any]) -> list[dict[str, str]]:
+    """Extract article-sized evidence from the retrieved official text."""
+    if not source_text:
+        return []
+
+    provisions: list[dict[str, str]] = []
+    article_numbers = profile.get("article_numbers", ())
+    article_pattern = re.compile(r"(?im)(?:^|\n)\s*(Art(?:igo|icle)?\.?\s+\d+[.º°]?(?:-A)?)\s*[:\-.]?\s*")
+    matches = list(article_pattern.finditer(source_text))
+    for number in article_numbers:
+        aliases = (f"Artigo {number}", f"Article {number}", f"Art. {number}")
+        matching = next((match for match in matches if any(alias.lower() in match.group(1).lower() for alias in aliases)), None)
+        if not matching:
+            continue
+        next_match = next((candidate for candidate in matches if candidate.start() > matching.start()), None)
+        end = next_match.start() if next_match else min(len(source_text), matching.start() + 2500)
+        excerpt = re.sub(r"\s+", " ", source_text[matching.start():end]).strip()
+        if excerpt:
+            provisions.append({"article": matching.group(1), "text": excerpt[:2500]})
+    return provisions
 
 
 LEGAL_PROFILES: list[dict[str, Any]] = [
@@ -170,6 +189,7 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "name": "Regulamento da IA da UE (Regulamento 2024/1689)",
         "basis": "Regulamento (UE) 2024/1689, nomeadamente os artigos 13.º, 14.º e 50.º",
         "articles": ("Artigos 13.º, 14.º e 50.º",),
+        "article_numbers": ("13", "14", "50"),
         "source": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
         "terms": ("sistema de ia", "supervisão humana", "transparência", "alto risco", "modelo", "agente"),
     },
@@ -178,6 +198,7 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "name": "RGPD (Regulamento UE 2016/679)",
         "basis": "Regulamento (UE) 2016/679, nomeadamente os artigos 5.º, 28.º, 32.º, 33.º e 35.º",
         "articles": ("Artigo 33.º", "Artigos 28.º e 32.º"),
+        "article_numbers": ("5", "28", "32", "33", "35"),
         "source": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
         "terms": ("dados pessoais", "subcontratante", "violação", "segurança", "notificar", "responsável pelo tratamento"),
     },
@@ -186,6 +207,7 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "name": "Código Civil Português e DL 446/85 (LCCG)",
         "basis": "Código Civil Português e Decreto-Lei n.º 446/85 (LCCG), nomeadamente os artigos 236.º, 280.º, 405.º, 762.º e 809.º",
         "articles": ("Artigos 280.º, 762.º e 809.º do Código Civil", "DL n.º 446/85 (LCCG)"),
+        "article_numbers": ("236", "280", "405", "762", "809"),
         "source": "https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-lei/1966-47344",
         "additional_sources": ("https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-lei/1985-446",),
         "terms": ("contrato", "obrigação", "responsabilidade", "indemnização", "culpa", "boa-fé", "cláusula"),
@@ -195,6 +217,7 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "name": "Código do Trabalho Português",
         "basis": "Código do Trabalho Português, nomeadamente os artigos 136.º e 137.º",
         "articles": ("Artigo 136.º do Código do Trabalho", "Artigo 137.º do Código do Trabalho"),
+        "article_numbers": ("136", "137"),
         "source": "https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2009-7",
         "terms": ("trabalhador", "empregador", "cessação", "não concorrência", "compensação", "atividade concorrente"),
     },
@@ -203,6 +226,7 @@ LEGAL_PROFILES: list[dict[str, Any]] = [
         "name": "Constituição da República Portuguesa",
         "basis": "Constituição da República Portuguesa, nomeadamente os artigos 13.º, 18.º, 47.º e 59.º",
         "articles": ("Artigos 13.º, 18.º, 47.º e 59.º",),
+        "article_numbers": ("13", "18", "47", "59"),
         "source": "https://www.parlamento.pt/Legislacao/Paginas/ConstituicaoRepublicaPortuguesa.aspx",
         "terms": ("direito", "liberdade", "igualdade", "trabalho", "proteção", "dignidade"),
     },
@@ -217,6 +241,7 @@ def retrieve_legal_framework(text: str, category: str) -> dict[str, Any]:
 
     normalized_text = (text or "").lower()
     source_text, source_status = load_cached_legal_text(profile)
+    provisions = extract_article_provisions(source_text, profile)
     matched_terms = [term for term in profile["terms"] if term in normalized_text]
     source_matches = [term for term in profile["terms"] if term in source_text.lower()]
     score = min(92, 35 + len(matched_terms) * 9 + min(18, len(source_matches) * 2))
@@ -232,6 +257,7 @@ def retrieve_legal_framework(text: str, category: str) -> dict[str, Any]:
         "source_status": source_status,
         "retrieval": "legal_framework_keywords",
         "articles": profile.get("articles", ()),
+        "provisions": provisions,
     }
 
 
@@ -244,16 +270,22 @@ def assess_clause(text: str, retrieval: dict[str, Any]) -> dict[str, Any]:
     findings: list[dict[str, Any]] = []
     uncertainty: list[str] = []
     articles = retrieval.get("articles", ())
+    provisions = retrieval.get("provisions", [])
+    has_official_evidence = bool(provisions) and retrieval.get("source_status") in {"cache", "downloaded", "stale-cache"}
 
     if retrieval.get("retrieval") != "legal_framework_keywords":
         uncertainty.append("Não foi identificado um perfil jurídico oficial específico para a categoria selecionada; a comparação disponível é apenas de recuperação de corpus.")
 
     def add_finding(article: str, severity: str, relationship: str, legal_excerpt: str, explanation: str, confidence: float) -> None:
+        matching_provision = next(
+            (provision["text"] for provision in provisions if re.search(rf"\b{re.escape(re.sub(r'\D', '', article))}\b", provision["article"])),
+            legal_excerpt if has_official_evidence else "",
+        )
         findings.append({
             "article": article,
             "legal_reference": category,
             "source_url": source_url,
-            "legal_excerpt": retrieval.get("evidence") or legal_excerpt,
+            "legal_excerpt": matching_provision,
             "contract_excerpt": clause_excerpt,
             "relationship": relationship,
             "severity": severity,
@@ -276,17 +308,27 @@ def assess_clause(text: str, retrieval: dict[str, Any]) -> dict[str, Any]:
             add_finding("Artigos 280.º, 762.º e 809.º do Código Civil; DL n.º 446/85 (LCCG)", "strong", "contradicts", "A responsabilidade por dolo ou culpa grave não pode ser antecipadamente excluída e cláusulas gerais devem respeitar a boa-fé e o equilíbrio contratual.", "A assunção expressa de responsabilidade ilimitada exige revisão jurídica por poder contrariar limites imperativos e o equilíbrio contratual.", 0.87)
         elif any(term in normalized for term in ("indemniz", "responsabilidade", "culpa", "cláusula")):
             add_finding("Artigos 236.º, 762.º e 809.º do Código Civil", "slight", "unclear", "A interpretação, boa-fé e limites da responsabilidade devem ser avaliados em conjunto com o contrato.", "Foram identificados elementos jurídicos relevantes, mas o excerto não demonstra, por si só, uma contradição forte.", 0.64)
+    elif "regulamento da ia" in category.lower():
+        if re.search(r"sem\s+(?:qualquer\s+)?supervisão humana|sem\s+intervenção humana|decisão exclusivamente automatizada", normalized):
+            add_finding("Artigo 14.º do Regulamento da IA da UE", "strong", "contradicts", "A supervisão humana deve permitir compreender, interpretar e, quando apropriado, ignorar ou reverter a saída do sistema.", "A cláusula exclui ou impede a supervisão humana exigida para a utilização indicada.", 0.86)
+        elif any(term in normalized for term in ("sistema de ia", "modelo", "transparência", "supervisão")):
+            add_finding("Artigos 13.º, 14.º e 50.º do Regulamento da IA da UE", "slight", "unclear", "Os deveres de transparência, informação e supervisão dependem da finalidade e da classificação do sistema.", "Foram identificados elementos de IA, mas o excerto não permite confirmar integralmente o cumprimento dos deveres aplicáveis.", 0.63)
+    elif "constituição da república" in category.lower() or "constituição portuguesa" in category.lower():
+        if re.search(r"sem\s+(?:qualquer\s+)?limitação|vigilância\s+permanente|apenas\s+(?:homens|mulheres)|com\s+base\s+na\s+(?:raça|origem|sexo)", normalized):
+            add_finding("Artigos 13.º, 18.º e 26.º da Constituição da República Portuguesa", "strong", "contradicts", "Os direitos fundamentais, a igualdade e a reserva da vida privada apenas podem ser restringidos nos termos constitucionalmente permitidos e de forma proporcional.", "A restrição descrita é potencialmente discriminatória ou desproporcionada face aos direitos fundamentais aplicáveis.", 0.82)
+        elif any(term in normalized for term in ("igualdade", "privacidade", "dignidade", "liberdade profissional")):
+            add_finding("Artigos 13.º, 18.º, 47.º e 59.º da Constituição da República Portuguesa", "slight", "unclear", "A conformidade depende da finalidade, necessidade e proporcionalidade da medida.", "A cláusula afeta direitos fundamentais, mas o excerto não é suficiente para concluir definitivamente.", 0.62)
 
-    if retrieval.get("source_status") == "unavailable":
+    if retrieval.get("source_status") == "unavailable" or not provisions:
         uncertainty.append("A fonte oficial não ficou disponível; a conclusão não deve ser tratada como verificação jurídica completa.")
     if not findings:
         add_finding(", ".join(articles) or "Referencial selecionado", "none", "supports", retrieval.get("basis", "Não foram identificadas regras aplicáveis no referencial recuperado."), "Não foram encontradas contradições materiais no excerto com os critérios atualmente disponíveis.", 0.58 if retrieval.get("source_status") != "unavailable" else 0.35)
         uncertainty.append("A ausência de contradições detetadas não prova conformidade jurídica; exige revisão do contexto contratual completo.")
 
     strongest = max((item["severity"] for item in findings), key=lambda value: {"none": 0, "slight": 1, "strong": 2}[value])
-    if strongest == "strong":
+    if strongest == "strong" and has_official_evidence:
         classification, risk_score = "HIGH", 85
-    elif strongest == "slight" or uncertainty:
+    elif strongest == "strong" or strongest == "slight" or uncertainty:
         classification, risk_score = "MEDIUM", 55
     else:
         classification, risk_score = "LOW", 20

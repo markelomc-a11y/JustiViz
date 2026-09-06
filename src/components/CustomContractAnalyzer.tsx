@@ -279,7 +279,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
           
           {/* Quick Presets */}
           <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-slate-500">Carregar Exemplo Pré-definido (simulado):</span>
+              <span className="text-xs font-semibold text-slate-500">Carregar Exemplo Pré-definido:</span>
             <div className="flex flex-wrap gap-2">
               {samplePresets.map((p, idx) => (
                 <button
@@ -470,7 +470,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-slate-600">
-                {lastGeneratedTrace.metadata?.data_provenance === 'live-analysis' ? 'Análise baseada no documento submetido e gerada pelo serviço de IA.' : 'Análise baseada no documento submetido; resultados locais simulados.'}
+                {lastGeneratedTrace.metadata?.data_provenance === 'live-analysis' ? 'Análise baseada no documento submetido e gerada pelo serviço de IA.' : 'Análise baseada no documento submetido; resultados de contingência locais.'}
               </p>
 
               <div>
