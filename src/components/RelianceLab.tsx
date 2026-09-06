@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getTraceProvenanceLabel } from '../utils/dataProvenance';
+import { formatRiskClassification } from '../utils/riskLabels';
 
 interface RelianceLabProps {
   caseStudies: ContractTrace[];
@@ -402,7 +403,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                     <div className="text-slate-400 text-[10px]">OUTPUT_SUMMARY: {s.summary}</div>
                   </div>
                 ))}
-                <div className="text-amber-400">[AGENT_VERDICT] Resultado gerado: {activeCase.final_verdict.classification}</div>
+                <div className="text-amber-400">[AGENT_VERDICT] Resultado gerado: {formatRiskClassification(activeCase.final_verdict.classification)}</div>
               </div>
             )}
 
@@ -427,7 +428,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                 Recomendação Proposta pelo Agente IA:
               </span>
               <p className="text-xs font-bold text-slate-900">
-                {activeCase.final_verdict.classification}
+                {formatRiskClassification(activeCase.final_verdict.classification)}
               </p>
               <p className="text-xs text-slate-600">
                 {activeCase.final_verdict.summary}

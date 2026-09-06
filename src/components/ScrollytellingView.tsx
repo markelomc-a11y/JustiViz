@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { GraphCanvas } from './GraphCanvas';
 import { getTraceProvenanceLabel } from '../utils/dataProvenance';
+import { formatRiskClassification, formatRiskLevel } from '../utils/riskLabels';
 import { 
   Play, 
   Pause, 
@@ -84,6 +85,29 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
   const [explanationSource, setExplanationSource] = useState<'groq' | 'local-fallback'>('local-fallback');
 
   const mockAudit = activeStep?.faithfulness_metadata;
+
+  const getRiskLabel = (risk: string | undefined) => formatRiskLevel(risk);
+  const getClassificationLabel = (classification: string | undefined) => formatRiskClassification(classification);
+
+  const clauseAssessment = activeClauseTrace.assessment
+    || steps.find((step) => step.payload?.clause_assessment)?.payload?.clause_assessment;
+  const clauseClassification = clauseAssessment?.classification || activeStep?.risk_level;
+  const formatPercentage = (value: number | undefined) => typeof value === 'number' && Number.isFinite(value)
+    ? `${Math.round(value * 100)}%`
+    : 'N/D';
+
+  const formatFaithfulnessRisk = (value: string | undefined, score: number | undefined) => {
+    if (!value && typeof score === 'number' && Number.isFinite(score)) {
+      return score >= 0.85 ? 'Reduzido' : score >= 0.6 ? 'Moderado' : 'Elevado';
+    }
+    if (!value) return 'N/D';
+    const labels: Record<string, string> = {
+      low: 'Reduzido',
+      medium: 'Moderado',
+      high: 'Elevado',
+    };
+    return labels[value.toLowerCase()] || 'N/D';
+  };
 
   const isLongExcerpt = excerptText.length > 220;
   const currentClauseTitle = currentClause ? `${trace.contract_title} - Cláusula ${currentClause.index ?? currentClauseIndex + 1}` : trace.contract_title;
@@ -571,7 +595,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                   <h3 className="text-sm font-bold text-slate-900 mt-1">{selectedAlternative ? 'Hipótese rejeitada' : getNodeDisplayName(selectedStep.node_name)}</h3>
                 </div>
                 <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${getRiskColor(selectedStep.risk_level)}`}>
-                  {selectedAlternative ? 'REJEITADA' : selectedStep.risk_level}
+                  {selectedAlternative ? 'Hipótese rejeitada' : getRiskLabel(clauseClassification)}
                 </span>
               </div>
 
@@ -587,6 +611,9 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     <span className="text-[9px] uppercase tracking-wider text-indigo-600">
                       {explanationSource === 'groq' ? 'Groq' : 'Anotação local'}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800">Classificação: {getRiskLabel(clauseClassification)}</span>
                   </div>
                   <p className="text-[12px] leading-relaxed text-indigo-950">{generatedExplanation}</p>
                 </div>
@@ -647,18 +674,16 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     <div className="flex items-center justify-between">
                       <span>Confiança</span>
                       <strong>{selectedAlternative
-                        ? `${Math.round(selectedAlternative.confidence_score * 100)}%`
-                        : activeStep.payload?.confidence_metric !== undefined
-                          ? `${Math.round(activeStep.payload.confidence_metric * 100)}%`
-                          : 'N/D'}</strong>
+                        ? formatPercentage(selectedAlternative.confidence_score)
+                        : formatPercentage(activeStep.payload?.confidence_metric)}</strong>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Fidelidade</span>
-                      <strong>{Math.round((mockAudit?.faithfulness_score ?? activeStep.faithfulness_metadata.faithfulness_score) * 100)}%</strong>
+                      <strong>{formatPercentage(mockAudit?.faithfulness_score)}</strong>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Latência</span>
-                      <strong>{activeStep.execution_time_ms !== undefined ? `${activeStep.execution_time_ms} ms` : 'N/D'}</strong>
+                      <strong>{typeof activeStep.execution_time_ms === 'number' && Number.isFinite(activeStep.execution_time_ms) ? `${activeStep.execution_time_ms} ms` : 'N/D'}</strong>
                     </div>
                   </div>
 
@@ -685,7 +710,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                     </p>
                     <div className="flex items-center justify-between text-[11px] text-slate-700">
                       <span>Risco de alucinação</span>
-                      <strong className="uppercase">{(mockAudit?.hallucination_risk ?? activeStep.faithfulness_metadata.hallucination_risk)}</strong>
+                      <strong>{formatFaithfulnessRisk(mockAudit?.hallucination_risk, mockAudit?.faithfulness_score)}</strong>
                     </div>
                   </div>
                 </div>
@@ -724,7 +749,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
                 Classificação Executiva
               </h3>
               <p className="text-sm font-semibold text-slate-900">
-                {activeClauseTrace.final_verdict.classification}
+                {getClassificationLabel(clauseAssessment?.classification || activeClauseTrace.final_verdict.classification)}
               </p>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {trace.final_verdict.summary}

@@ -19,6 +19,7 @@ import {
   Sliders,
   ShieldCheck
 } from 'lucide-react';
+import { formatRiskClassification } from '../utils/riskLabels';
 
 const CATEGORY_OPTIONS = [
   'Regulamento da IA da UE (Regulamento 2024/1689)',
@@ -474,7 +475,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
 
               <div>
                 <h3 className="text-base font-bold text-slate-900">
-                  {lastGeneratedTrace.final_verdict.classification}
+                  {formatRiskClassification(lastGeneratedTrace.final_verdict.classification)}
                 </h3>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {lastGeneratedTrace.final_verdict.summary}
