@@ -19,7 +19,9 @@ import {
   Zap,
   ArrowRight,
   TrendingUp,
-  Download
+  Download,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getTraceProvenanceLabel } from '../utils/dataProvenance';
@@ -35,6 +37,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
   onInspectTraceInScrollytelling,
 }) => {
   const [selectedCaseId, setSelectedCaseId] = useState<string>(caseStudies[3]?.trace_id || caseStudies[0].trace_id);
+  const [selectedClauseIndex, setSelectedClauseIndex] = useState<number>(0);
   const [inspectionMode, setInspectionMode] = useState<'scrollytelling_preview' | 'raw_logs'>('scrollytelling_preview');
   const [timerRunning, setTimerRunning] = useState<boolean>(true);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -54,6 +57,21 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
   });
 
   const activeCase = caseStudies.find(c => c.trace_id === selectedCaseId) || caseStudies[0];
+  const clauseItems = activeCase.clauses?.length ? activeCase.clauses : [{
+    index: 1,
+    title: 'Contrato completo',
+    text: activeCase.contract_excerpt,
+    trace: activeCase,
+  }];
+  const activeClause = clauseItems[Math.min(selectedClauseIndex, clauseItems.length - 1)] || clauseItems[0];
+  const activeClauseTrace = activeClause.trace || activeCase;
+  const nodeLabels: Record<string, string> = {
+    extract_clauses: 'extração de cláusulas',
+    classify_risk: 'classificação de risco',
+    check_precedent: 'referências legais',
+    faithfulness_audit: 'auditoria de fidelidade',
+    verdict_synthesis: 'síntese do veredito',
+  };
   const agentIsCorrect = !activeCase.reliance_profile?.injected_error_present;
 
   useEffect(() => {
@@ -122,6 +140,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
 
   const handleResetExperiment = (caseId?: string) => {
     if (caseId) setSelectedCaseId(caseId);
+    setSelectedClauseIndex(0);
     setUserDecision(null);
     setElapsedSeconds(0);
     setTimerRunning(true);
@@ -153,13 +172,13 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              Laboratório de Calibração de Confiança (Appropriate Reliance Lab)
+              Laboratório de Calibração de Confiança
             </h1>
             <p className="text-[11px] font-semibold text-slate-600 mt-1">
               Caso selecionado: {getTraceProvenanceLabel(activeCase)}
             </p>
             <p className="text-xs sm:text-sm text-slate-600 max-w-3xl mt-1">
-              O objetivo da XAI não é a confiança cega, mas sim a <strong>Confiança Calibrada (Appropriate Reliance)</strong>: confiar no agente quando este está correto, e detetar e anular rapidamente erros quando a IA alucina ou comete uma falha lógica.
+              O objetivo da XAI não é a confiança cega, mas sim a <strong>Confiança Calibrada</strong>: confiar no agente quando este está correto e detetar rapidamente erros ou falhas lógicas.
             </p>
           </div>
 
@@ -208,7 +227,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
-          {/* Quadrant 1: Top-Left (Appropriate Reliance) */}
+          {/* Quadrante 1 */}
           <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 space-y-1.5 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1">
@@ -221,11 +240,11 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
             </p>
           </div>
 
-          {/* Quadrant 2: Top-Right (Overreliance - The Danger Zone) */}
+          {/* Quadrante 2 */}
           <div className="p-4 rounded-xl bg-rose-50/80 border border-rose-200 space-y-1.5 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> Hiper-confiança / Overreliance (IA Falha + Jurista Aceita Cegamente)
+                <span className="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> Hiper-confiança (IA falha + jurista aceita cegamente)
               </span>
               <span className="text-lg font-bold text-rose-700 font-mono">{matrixCounts.overreliance}</span>
             </div>
@@ -234,11 +253,11 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
             </p>
           </div>
 
-          {/* Quadrant 3: Bottom-Left (Underreliance / Subreliance) */}
+          {/* Quadrante 3 */}
           <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200 space-y-1.5 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-amber-600" /> Sub-confiança / Underreliance (IA Correta + Jurista Rejeita)
+                <Clock className="w-3.5 h-3.5 text-amber-600" /> Sub-confiança (IA correta + jurista rejeita)
               </span>
               <span className="text-lg font-bold text-amber-700 font-mono">{matrixCounts.underreliance}</span>
             </div>
@@ -247,11 +266,11 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
             </p>
           </div>
 
-          {/* Quadrant 4: Bottom-Right (Appropriate Self-Reliance - Error Catching) */}
+          {/* Quadrante 4 */}
           <div className="p-4 rounded-xl bg-indigo-50/80 border border-indigo-200 space-y-1.5 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" /> Auto-confiança Apropriada (IA Falha + Jurista Deteta e Corrige!)
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" /> Autonomia crítica apropriada (IA falha + jurista deteta e corrige)
               </span>
               <span className="text-lg font-bold text-indigo-700 font-mono">{matrixCounts.appropriate_self_reliance}</span>
             </div>
@@ -286,6 +305,43 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-2">
+            <FileText className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
+            <label htmlFor="reliance-clause-select" className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 whitespace-nowrap">
+              Cláusula
+            </label>
+            <button
+              type="button"
+              onClick={() => setSelectedClauseIndex((index) => Math.max(0, index - 1))}
+              disabled={selectedClauseIndex === 0}
+              className="h-7 w-7 rounded-md border border-indigo-200 bg-white text-indigo-700 disabled:opacity-40"
+              aria-label="Cláusula anterior"
+            >
+              <ChevronLeft className="w-3.5 h-3.5 mx-auto" />
+            </button>
+            <select
+              id="reliance-clause-select"
+              value={Math.min(selectedClauseIndex, clauseItems.length - 1)}
+              onChange={(event) => setSelectedClauseIndex(Number(event.target.value))}
+              className="min-w-0 max-w-[240px] rounded-md border border-indigo-200 bg-white px-2 py-1.5 text-[11px] text-slate-700"
+              aria-label="Selecionar cláusula para auditoria"
+            >
+              {clauseItems.map((clause, index) => (
+                <option key={`${clause.index}-${clause.title}`} value={index}>{index + 1}. {clause.title}</option>
+              ))}
+            </select>
+            <span className="text-[10px] font-semibold text-indigo-700 whitespace-nowrap">{selectedClauseIndex + 1}/{clauseItems.length}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedClauseIndex((index) => Math.min(clauseItems.length - 1, index + 1))}
+              disabled={selectedClauseIndex >= clauseItems.length - 1}
+              className="h-7 w-7 rounded-md border border-indigo-200 bg-white text-indigo-700 disabled:opacity-40"
+              aria-label="Próxima cláusula"
+            >
+              <ChevronRight className="w-3.5 h-3.5 mx-auto" />
+            </button>
           </div>
 
           {/* Interface Comparison Toggle: Scrollytelling vs Raw Logs */}
@@ -335,7 +391,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                 </span>
               </div>
               <blockquote className="font-mono text-xs text-slate-800 bg-white p-3.5 rounded-lg border border-slate-200 leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto shadow-xs">
-                {activeCase.contract_excerpt}
+                {activeClause.text}
               </blockquote>
             </div>
 
@@ -358,7 +414,7 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
 
                 {/* Step Cards with Forked Alternatives */}
                 <div className="space-y-3">
-                  {activeCase.steps.map((step, idx) => (
+                  {activeClauseTrace.steps.map((step, idx) => (
                     <div key={step.step_id} className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-xs">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-900">
@@ -395,15 +451,15 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
               /* Raw Log Dump (Hard to parse) */
               <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2 font-mono text-xs text-slate-400 max-h-96 overflow-y-auto">
                 <div className="text-slate-500">=== LOGS TÉCNICOS BRUTOS DE EXECUÇÃO DO AGENTE ===</div>
-                <div className="text-emerald-400">[INFO] A inicializar grafo de estados LangGraph. Session ID: {activeCase.trace_id}</div>
-                {activeCase.steps.map((s, idx) => (
+                <div className="text-emerald-400">[INFORMAÇÃO] A inicializar o grafo de estados LangGraph. ID da sessão: {activeClauseTrace.trace_id}</div>
+              {activeClauseTrace.steps.map((s, idx) => (
                   <div key={s.step_id} className="space-y-0.5 border-b border-slate-800 pb-2">
-                    <div className="text-indigo-400">[NODE_{idx+1}] {s.node_name} | status=OK | time={s.execution_time_ms}ms</div>
-                    <div className="text-slate-300 text-[10px] truncate">RAW_PAYLOAD: {JSON.stringify(s.payload)}</div>
-                    <div className="text-slate-400 text-[10px]">OUTPUT_SUMMARY: {s.summary}</div>
+                    <div className="text-indigo-400">[NÓ_{idx+1}] {nodeLabels[s.node_name] || s.node_name} | estado=OK | tempo={s.execution_time_ms ?? 'N/D'}ms</div>
+                    <div className="text-slate-300 text-[10px] truncate">CARGA_TÉCNICA: {JSON.stringify(s.payload)}</div>
+                    <div className="text-slate-400 text-[10px]">RESUMO_DE_SAÍDA: {s.summary}</div>
                   </div>
                 ))}
-                <div className="text-amber-400">[AGENT_VERDICT] Resultado gerado: {formatRiskClassification(activeCase.final_verdict.classification)}</div>
+                <div className="text-amber-400">[VEREDITO_DO_AGENTE] Resultado gerado: {formatRiskClassification(activeClauseTrace.final_verdict.classification)}</div>
               </div>
             )}
 
@@ -428,10 +484,10 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                 Recomendação Proposta pelo Agente IA:
               </span>
               <p className="text-xs font-bold text-slate-900">
-                {formatRiskClassification(activeCase.final_verdict.classification)}
+                {formatRiskClassification(activeClauseTrace.final_verdict.classification)}
               </p>
               <p className="text-xs text-slate-600">
-                {activeCase.final_verdict.summary}
+                {activeClauseTrace.final_verdict.summary}
               </p>
             </div>
 
@@ -472,34 +528,34 @@ export const RelianceLab: React.FC<RelianceLabProps> = ({
                 {/* Outcome Banner */}
                 {userDecision === 'ACCEPT' && agentIsCorrect && (
                   <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-1">
-                    <strong className="block font-bold">✓ CONFIANÇA APROPRIADA (APPROPRIATE RELIANCE)</strong>
+                    <strong className="block font-bold">✓ CONFIANÇA APROPRIADA</strong>
                     <p>O agente estava correto e validou a recomendação em {elapsedSeconds.toFixed(1)}s.</p>
                   </div>
                 )}
 
                 {userDecision === 'REJECT_ERROR' && !agentIsCorrect && (
                   <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs space-y-1">
-                    <strong className="block font-bold">🎯 AUTO-CONFIANÇA APROPRIADA (FALHA DA IA IDENTIFICADA!)</strong>
+                    <strong className="block font-bold">🎯 AUTONOMIA CRÍTICA APROPRIADA (FALHA DA IA IDENTIFICADA)</strong>
                     <p>Excelente! Identificou a falha de raciocínio da IA e sobrepôs-se com sucesso ao agente em {elapsedSeconds.toFixed(1)}s!</p>
                   </div>
                 )}
 
                 {userDecision === 'ACCEPT' && !agentIsCorrect && (
                   <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-900 text-xs space-y-1">
-                    <strong className="block font-bold">⚠️ FALHA DE HIPER-CONFIANÇA (OVERRELIANCE)</strong>
+                    <strong className="block font-bold">⚠️ FALHA DE HIPER-CONFIANÇA</strong>
                     <p>Aceitou a recomendação do agente, mas a IA alucinou uma penalidade de 5M€ inexistente na Cláusula 9.2!</p>
                   </div>
                 )}
 
                 {userDecision === 'REJECT_ERROR' && agentIsCorrect && (
                   <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
-                    <strong className="block font-bold">⚠️ SUB-CONFIANÇA (UNDERRELIANCE)</strong>
+                    <strong className="block font-bold">⚠️ SUB-CONFIANÇA</strong>
                     <p>O parecer da IA era juridicamente válido com base na legislação e precedentes, mas foi rejeitado sem fundamento.</p>
                   </div>
                 )}
 
                 <div className="text-[11px] text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                  <strong className="text-slate-800 block mb-0.5 font-bold">Realidade Efetiva (Ground Truth):</strong>
+                  <strong className="text-slate-800 block mb-0.5 font-bold">Referência de validação:</strong>
                   {activeCase.reliance_profile?.injected_error_present
                     ? activeCase.reliance_profile.error_description
                     : (() => {

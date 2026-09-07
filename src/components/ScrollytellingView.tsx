@@ -8,7 +8,7 @@ import {
 } from '../types';
 import { GraphCanvas } from './GraphCanvas';
 import { getTraceProvenanceLabel } from '../utils/dataProvenance';
-import { formatRiskClassification, formatRiskLevel } from '../utils/riskLabels';
+import { formatAiActRiskTier, formatRiskClassification, formatRiskLevel } from '../utils/riskLabels';
 import { 
   Play, 
   Pause, 
@@ -759,7 +759,7 @@ export const ScrollytellingView: React.FC<ScrollytellingViewProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                Regulamento IA UE: {trace.final_verdict.eu_ai_act_risk_tier}
+                Regulamento IA UE: {formatAiActRiskTier(trace.final_verdict.eu_ai_act_risk_tier)}
               </span>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                 Índice de Risco: {trace.final_verdict.risk_score}/100

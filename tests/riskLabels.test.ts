@@ -15,4 +15,8 @@ test('composed classifications preserve reasoning and translate the level', () =
     'Risco Elevado: avaliação agregada de 2 cláusulas',
   );
   assert.equal(formatRiskClassification(undefined), 'N/D');
+  assert.equal(
+    formatRiskClassification('Critical Risk: Asymmetric Unbounded Liability / Overbroad Restriction'),
+    'Risco Crítico: Responsabilidade ilimitada assimétrica / Restrição excessiva',
+  );
 });

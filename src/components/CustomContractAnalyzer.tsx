@@ -19,7 +19,7 @@ import {
   Sliders,
   ShieldCheck
 } from 'lucide-react';
-import { formatRiskClassification } from '../utils/riskLabels';
+import { formatAiActRiskTier, formatRiskClassification } from '../utils/riskLabels';
 
 const CATEGORY_OPTIONS = [
   'Regulamento da IA da UE (Regulamento 2024/1689)',
@@ -489,7 +489,7 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="font-medium">Regulamento da IA (UE):</span>
-                  <strong className="text-indigo-700 font-bold">{lastGeneratedTrace.final_verdict.eu_ai_act_risk_tier}</strong>
+                  <strong className="text-indigo-700 font-bold">{formatAiActRiskTier(lastGeneratedTrace.final_verdict.eu_ai_act_risk_tier)}</strong>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="font-medium">Hipóteses Rejeitadas Geradas:</span>
@@ -518,15 +518,23 @@ O Subcontratante notificará o Responsável pelo Tratamento de qualquer violaç�
               <ul className="space-y-3 text-xs text-slate-600">
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <span><strong className="text-slate-800">Nó de Extração:</strong> Segmenta obrigações, entidades contratuais e mapeia os termos para as taxonomias de referência (DL 446/85 / CUAD).</span>
+                  <span><strong className="text-slate-800">Extração da cláusula:</strong> Segmenta a cláusula e identifica obrigações, entidades, prazos e limites no texto submetido.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <span><strong className="text-slate-800">Classificação de Risco:</strong> Determina a exposição indemnizatória e gera pelo menos 3 hipóteses alternativas rejeitadas.</span>
+                  <span><strong className="text-slate-800">2. Referencial jurídico:</strong> Recupera a legislação e os artigos associados à categoria jurídica selecionada e reúne a evidência oficial disponível.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <span><strong className="text-slate-800">Auditoria de Fidelidade:</strong> Executa um nó auditor secundário para calcular o grau de fidelidade e detetar alucinações.</span>
+                  <span><strong className="text-slate-800">3. Classificação de risco:</strong> Compara a cláusula com as disposições recuperadas, identifica contradições e determina o nível de risco.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">4</span>
+                  <span><strong className="text-slate-800">Auditoria de fidelidade:</strong> Compara a explicação, a evidência contratual, as referências legais e a classificação obtida.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">5</span>
+                  <span><strong className="text-slate-800">Síntese do veredito:</strong> Resume a fundamentação, as incertezas e a recomendação de revisão da cláusula.</span>
                 </li>
               </ul>
             </div>
