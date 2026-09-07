@@ -1,376 +1,246 @@
 # JustiViz
 
-> **Explicabilidade de agentes de IA através de visualização narrativa e interação em contexto de análise contratual**
+> Visualização narrativa e interação em contexto para a análise explicável de contratos por agentes de inteligência artificial.
 
-## Visão Geral
+## Visão geral
 
-**JustiViz** é um projeto académico de final de curso da **Licenciatura em Engenharia Multimédia** que investiga como a visualização narrativa e a interação humano-máquina podem tornar compreensíveis os processos de decisão de agentes de inteligência artificial.
+O JustiViz é o projeto final da Licenciatura em Engenharia Multimédia. O protótipo investiga como uma cadeia de análise contratual pode ser apresentada de forma compreensível através de scrollytelling, grafos dirigidos, zoom semântico e auditoria de fidelidade.
 
-O protótipo aplica estes princípios ao contexto da análise contratual. Em vez de apresentar apenas uma conclusão ou registos técnicos difíceis de interpretar, transforma o percurso de análise num espaço visual explorável: o utilizador pode acompanhar as etapas do raciocínio, consultar alternativas rejeitadas, inspecionar dados técnicos e analisar diferentes cláusulas individualmente.
+A aplicação não substitui a análise de profissionais do Direito. O seu objetivo académico é tornar visíveis a evidência utilizada, a classificação de risco, as referências jurídicas, as incertezas e as alternativas consideradas pelo sistema.
 
-**Áreas de investigação:** inteligência artificial generativa, inteligência artificial explicável (XAI), aprendizagem automática, visualização de informação e scrollytelling.
+## Funcionalidades atuais
 
-## Problema e Motivação
+### Análise narrativa
 
-Agentes autónomos executam cadeias de operações complexas, mas os seus resultados são frequentemente percebidos como uma "caixa negra". Os registos brutos da execução são úteis para desenvolvimento e depuração, mas inadequados para utilizadores que necessitam de avaliar recomendações antes de as usar em decisões críticas.
+A vista principal apresenta cinco etapas por cláusula:
 
-**O JustiViz propõe uma abordagem de visualização que:**
-- Torna o percurso de análise mais legível e contextualizado
-- Apresenta a relação entre dados, decisões e recomendações
-- Mostra hipóteses consideradas e rejeitadas pelo agente
-- Apoia a verificação humana sem substituir o juízo profissional
-- Permite a inspeção de informação em diferentes níveis de detalhe
+1. **Extração da cláusula**: identifica e apresenta o texto e os elementos contratuais relevantes.
+2. **Referencial jurídico**: recupera a legislação associada à categoria selecionada e a evidência disponível.
+3. **Classificação de risco**: compara a cláusula com as disposições recuperadas e identifica possíveis contradições.
+4. **Auditoria de fidelidade**: compara a explicação, a evidência contratual, a evidência legal e a classificação.
+5. **Síntese do veredito**: resume a fundamentação, as incertezas e a recomendação de revisão.
 
-## Funcionalidades Principais
+O bloco narrativo e o grafo permanecem visíveis durante o scroll em ecrãs largos. A roda do rato sobre o bloco narrativo permite percorrer as etapas.
 
-### 📖 Narrativa de Análise (Scrollytelling)
-A vista principal organiza o percurso em etapas de extração, classificação de risco, consulta de precedentes, auditoria de fidelidade e síntese da recomendação. A navegação por hover permite avançar pela narrativa sem interferir com o scroll normal da página.
+### Classificação jurídica por cláusula
 
-### 🔗 Explorador de Grafos Dirigidos
-Apresentação interativa de nós de decisão, transições e alternativas rejeitadas. Alternância entre visualização em grafo interativo e matriz de comparação das alternativas.
+Cada cláusula recebe uma avaliação estruturada com:
 
-### 📄 Segmentação e Análise de Cláusulas
-- Suporta ficheiros `.txt`, `.docx` e `.pdf`
-- Segmentação automática de cláusulas
-- Análise individual de cada cláusula com atualização em tempo real do grafo, narrativa e veredito
-- Entrada manual de texto para testes rápidos
+- classificação `LOW`, `MEDIUM`, `HIGH` ou `CRITICAL`;
+- pontuação de risco;
+- artigos e legislação utilizados;
+- excerto contratual comparado;
+- excerto legal recuperado;
+- relação entre a cláusula e a referência: compatível, contraditória ou inconclusiva;
+- intensidade da relação: sem contradição, ligeira ou forte;
+- confiança da avaliação;
+- indicação de necessidade de revisão profissional.
 
-### 🔍 Zoom Semântico
-- **Nível Macro:** Resumo acessível do raciocínio e recomendação
-- **Nível Micro:** Parâmetros técnicos, métricas, excertos, variáveis de estado e metadados de auditoria
+Na interface, estes valores são apresentados em português europeu como **Risco Reduzido**, **Risco Moderado**, **Risco Elevado** e **Risco Crítico**.
 
-### ⚗️ Laboratório de Confiança (Trust Lab)
-Simula situações de erro e diferentes padrões de dependência das recomendações do agente. Explora a relação entre explicabilidade, confiança e decisão humana.
+Uma contradição forte só pode produzir risco elevado quando existe evidência legal oficial recuperada. Se a fonte não estiver disponível ou não for possível extrair uma disposição aplicável, o resultado é tratado como incerto e encaminhado para revisão profissional.
 
-### 🤖 Análise Local com Contingência
-A análise é executada pelo agente LangGraph local, com representação de contingência para permitir a utilização do protótipo mesmo quando serviços auxiliares não estão disponíveis.
+### Referenciais jurídicos
 
-## Tecnologias
+O serviço reconhece categorias associadas a:
 
-### Frontend
-- **React 19** com TypeScript para interface componente
-- **Vite** como bundler e dev server
-- **D3.js** para visualização de grafos dirigidos
-- **Scrollama** para coordenação de narrativa e scroll
-- **Tailwind CSS** para estilo responsivo
-- **Lucide React** para ícones
-- **Motion** para animações fluidas
-- **Canvas Confetti** para feedback visual lúdico
+- RGPD, incluindo os artigos 5.º, 28.º, 32.º, 33.º e 35.º;
+- Regulamento da IA da União Europeia, incluindo os artigos 13.º, 14.º e 50.º;
+- Código Civil Português e Decreto-Lei n.º 446/85, incluindo os artigos 236.º, 280.º, 405.º, 762.º e 809.º;
+- Código do Trabalho Português, incluindo os artigos 136.º e 137.º;
+- Constituição da República Portuguesa, incluindo os artigos 13.º, 18.º, 47.º e 59.º.
 
-### Backend
-- **Express** como servidor HTTP e proxy
-- **Vite Dev Middleware** para hot reload em desenvolvimento
+As fontes configuradas incluem EUR-Lex, Diário da República e Assembleia da República. O serviço descarrega e coloca em cache o texto disponível, identifica disposições por artigo e associa a evidência aos findings da cláusula.
 
-### Python & IA
-- **LangGraph** para cadeia de estados da análise de contratos
-- **Python 3.10+** para processamento de linguagem natural
-- **Groq API** (opcional) como LLM secundário para anotações e auditoria de fidelidade
-- **Ollama** (futuro) para modelos LLM locais
+### Documentos e cláusulas
 
-### Ferramentas de Processamento
-- **Mammoth.js** para parsing de documentos `.docx`
-- **PDF.js** para extração de texto de PDFs
-- **Python regex & NLTK** para segmentação de cláusulas
+O analisador personalizado suporta:
 
-### Testes & Qualidade
-- **Playwright** para testes de navegador (E2E)
-- **TypeScript** para validação de tipos estática
-- **tsx** para execução de testes Node.js com TypeScript
+- ficheiros `.txt`;
+- ficheiros `.docx`, através de Mammoth.js;
+- ficheiros `.pdf`, através de PDF.js;
+- texto introduzido manualmente;
+- exemplos de demonstração pré-configurados.
+
+Depois da segmentação, cada cláusula é analisada de forma independente. O Laboratório de Confiança inclui um seletor de cláusula com navegação anterior/seguinte.
+
+### Grafo e alternativas
+
+O grafo representa os cinco passos e as alternativas de decisão associadas. As alternativas são representações auditáveis geradas a partir dos findings e dos critérios da análise; não devem ser interpretadas como acesso à cadeia privada de pensamento de um modelo.
+
+O explorador inclui:
+
+- grafo dirigido interativo;
+- matriz de alternativas rejeitadas;
+- pesquisa e filtros;
+- seleção de cláusulas;
+- distinção entre classificação da cláusula e auditoria de fidelidade.
+
+### Zoom semântico
+
+- **Macro**: narrativa, evidência principal e explicação em linguagem acessível.
+- **Micro**: payload, métricas disponíveis, variáveis de estado, findings legais, fontes e auditoria.
+
+O detalhe técnico fica oculto em modo Macro e visível em modo Micro. Quando uma métrica não existe no rasto, é apresentado `N/D`.
+
+### Laboratório de Confiança
+
+O Laboratório de Confiança permite comparar a apresentação narrativa com logs técnicos e registar a decisão do participante. O utilizador pode selecionar o caso, navegar pelas cláusulas e decidir se aceita ou rejeita a recomendação apresentada.
+
+Os resultados são guardados localmente no navegador e podem ser exportados em JSON.
 
 ## Arquitetura
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (Browser)                   │
-│  React 19 + TypeScript + Vite                          │
-├─────────────────────────────────────────────────────────┤
-│  ScrollytellingView | GraphExplorer | ContractAnalyzer │
-│  RelianceLab | DigraphExplorerView | HierarchicalZoom  │
-└────────────────────┬────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-┌───────▼──────────────────────┐ │
-│   Express Server + Vite      │ │
-│   Hot Reload & API Routes    │ │
-├──────────────────────────────┤ │
-│ /api/segment-contract        │ │
-│ /api/analyze-contract        │ │
-│ /api/audit-faithfulness      │ │
-└───────┬──────────────────────┘ │
-        │                         │
-   ┌────▼────────────────────────▼─┐
-   │   Python LangGraph Service     │
-   │   (agent/langgraph_service.py) │
-   ├────────────────────────────────┤
-   │ • Análise de contratos         │
-   │ • Classificação de risco       │
-   │ • Precedentes legais           │
-   │ • Auditoria de fidelidade      │
-   │ • Integração Groq (opcional)   │
-   └────────────────────────────────┘
+```text
+Navegador
+  React 19 + TypeScript + Vite
+  ScrollytellingView, GraphCanvas, DigraphExplorerView,
+  CustomContractAnalyzer, RelianceLab
+          |
+          v
+Express + Vite middleware
+  /api/segment-contract
+  /api/analyze-contract
+  /api/generate-explanation
+  /api/audit-faithfulness
+          |
+          v
+Serviço Python LangGraph
+  segmentação
+  recuperação de fontes legais
+  avaliação por cláusula
+  auditoria de fidelidade
+  síntese do veredito
+  Groq opcional para anotações e auditoria
 ```
 
-## Estrutura do Projeto
+## Estrutura principal
 
-```
-JustiViz/
-├── agent/                      # Backend Python
-│   ├── langgraph_service.py   # Serviço principal LangGraph
-│   ├── segmentation.py        # Segmentação de cláusulas
-│   ├── cuad_corpus.json       # Corpus de cláusulas (CUAD dataset)
-│   └── __init__.py
-├── src/                        # Frontend React + TypeScript
-│   ├── components/             # Componentes da aplicação
-│   │   ├── ScrollytellingView.tsx
-│   │   ├── DigraphExplorerView.tsx
-│   │   ├── GraphCanvas.tsx
-│   │   ├── CustomContractAnalyzer.tsx
-│   │   ├── RelianceLab.tsx
-│   │   ├── HierarchicalZoomDrawer.tsx
-│   │   ├── VirtualizedAlternatives.tsx
-│   │   ├── MethodologyHelpModal.tsx
-│   │   └── Navbar.tsx
-│   ├── data/                   # Casos de estudo pré-carregados
-│   │   ├── cuadTraces.ts       # Traços de análise CUAD
-│   │   └── ptTraces.ts         # Traços de análise PT (precedentes)
-│   ├── utils/                  # Utilitários e análise
-│   │   ├── contractAnalysis.ts # Lógica de análise
-│   │   ├── dataProvenance.ts   # Rastreamento de dados
-│   │   ├── staticTraceGenerator.ts
-│   │   ├── staticTraceGeneratorPt.ts
-│   │   └── fps.ts              # Utilitários de performance
-│   ├── types.ts                # Definições de tipos TypeScript
-│   ├── App.tsx                 # Componente raiz e navegação
-│   ├── main.tsx                # Entry point React
-│   └── index.css               # Estilos globais
-├── tests/                      # Testes automatizados
-│   ├── browser-performance.spec.ts  # Testes Playwright
-│   ├── performance.test.ts      # Testes performance Node.js
-│   ├── test_clause_segmentation.py  # Testes Python
-│   └── test_langgraph_service.py    # Testes serviço LangGraph
-├── server.ts                   # Servidor Express + Vite proxy
-├── vite.config.ts              # Configuração Vite
-├── tsconfig.json               # Configuração TypeScript
-├── package.json                # Dependências Node.js
-├── requirements.txt            # Dependências Python
-├── .env.example                # Exemplo de variáveis de ambiente
-├── playwright.config.ts        # Configuração de testes E2E
-└── README.md                   # Este ficheiro
+```text
+agent/
+  langgraph_service.py       Serviço LangGraph e recuperação legal
+  segmentation.py            Segmentação de contratos
+  cuad_corpus.json            Subconjunto local do corpus CUAD
+
+src/
+  components/                Componentes React da interface
+  data/                      Casos de estudo pré-carregados
+  utils/                     Análise local, provenance e labels
+  types.ts                   Contratos de dados TypeScript
+  App.tsx                    Router principal da aplicação
+
+server.ts                    Express, proxy e ciclo de vida do LangGraph
+tests/                       Testes TypeScript, Python e Playwright
 ```
 
-## Instalação e Configuração
+## Fluxo de análise
+
+1. O Express inicia o serviço Python LangGraph na porta `8001`.
+2. O frontend extrai o texto do documento carregado.
+3. O endpoint de segmentação identifica cláusulas.
+4. O endpoint de análise envia o contrato, a categoria e o texto ao LangGraph.
+5. O serviço recupera a referência jurídica selecionada e tenta obter a fonte oficial.
+6. Cada cláusula é analisada independentemente.
+7. A avaliação compara indicadores da cláusula com disposições legais recuperadas.
+8. O serviço produz os cinco passos narrativos, findings e auditoria.
+9. O contrato recebe um veredito agregado a partir das classificações das cláusulas.
+10. O frontend apresenta a narrativa, o grafo, o detalhe técnico e as recomendações.
+
+## Instalação
 
 ### Pré-requisitos
 
-- **Node.js 18+** com npm ou yarn
-- **Python 3.10+**
-- **Git**
+- Node.js 18 ou superior;
+- Python 3.10 ou superior;
+- npm;
+- dependências Python instaladas.
 
-### 1. Clonar o Repositório
-
-```bash
-git clone https://github.com/markelomc-a11y/JustiViz.git
-cd JustiViz
-```
-
-### 2. Instalar Dependências Node.js
+### Dependências
 
 ```bash
 npm install
-# ou
-yarn install
-```
-
-### 3. Instalar Dependências Python
-
-```bash
-python -m venv venv          # Criar ambiente virtual (opcional mas recomendado)
-source venv/bin/activate    # No Windows: venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Configurar Variáveis de Ambiente
+### Configuração opcional
 
-```bash
-cp .env.example .env
-```
+Copiar `.env.example` para `.env`. A variável `GROQ_API_KEY` é opcional. Sem ela, o LangGraph mantém a recuperação e a validação determinísticas e usa respostas locais para anotações e auditoria secundária.
 
-Editar o ficheiro `.env` com as suas configurações:
+Variáveis relevantes:
 
 ```env
-# Chave Groq (opcional - para anotações gerativas e auditoria)
-GROQ_API_KEY="sua_chave_groq_aqui"
-GROQ_MODEL="openai/gpt-oss-20b"
-
-# URL da aplicação (para links internos e OAuth)
-APP_URL="http://localhost:3000"
-
-# Portas de desenvolvimento
 PORT=3000
-VITE_HMR_PORT=3001
-DISABLE_HMR="false"
-
-# Cache de fontes legais
-LEGAL_SOURCE_CACHE_DIR=".cache/legal-sources"
-LEGAL_SOURCE_CACHE_TTL_HOURS="168"
-LEGAL_SOURCE_TIMEOUT_SECONDS="8"
+LANGGRAPH_PORT=8001
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-20b
+LEGAL_SOURCE_CACHE_DIR=.cache/legal-sources
+LEGAL_SOURCE_CACHE_TTL_HOURS=168
+LEGAL_SOURCE_TIMEOUT_SECONDS=8
 ```
 
 ## Execução
 
-### Desenvolvimento
-
-Inicia o servidor Express com suporte a hot reload via Vite:
-
 ```bash
 npm run dev
 ```
 
-A aplicação estará acessível em `http://localhost:3000`
+Abrir `http://localhost:3000`.
 
-**No Windows PowerShell, com interpretador Python explícito:**
-
-```powershell
-$env:PYTHON_BIN = "py"
-npm run dev
-```
-
-**Com portas personalizadas:**
+Para produção:
 
 ```bash
-export PORT=3002
-export VITE_HMR_PORT=3003
-npm run dev
+npm run build
+npm run start
 ```
 
-**Desativar hot reload se a porta HMR estiver ocupada:**
+## Testes e validação
 
 ```bash
-export DISABLE_HMR="true"
-npm run dev
-```
-
-### Construção para Produção
-
-```bash
-npm run build       # Constrói frontend (Vite) + backend (esbuild)
-npm run start       # Executa a versão compilada
-```
-
-### Limpeza
-
-```bash
-npm run clean       # Remove pasta dist e ficheiros gerados
-```
-
-## Testes
-
-### Testes de Performance (Node.js)
-
-```bash
+npm run lint
 npm test
-```
-
-Executa testes com `tsx --test` nos ficheiros `tests/*.test.ts`. Testa o pipeline de análise, caminhos alternativos e monitor FPS.
-
-### Testes do Navegador (E2E com Playwright)
-
-```bash
 npm run test:browser
 ```
 
-Configuração em [playwright.config.ts](playwright.config.ts)
-
-### Testes Python
+Os testes Python podem ser executados com:
 
 ```bash
-# Teste de segmentação de cláusulas
-PYTHONPATH=. pytest -q tests/test_clause_segmentation.py
-
-# Testes completos (segmentação + LangGraph)
 PYTHONPATH=. pytest -q tests/test_clause_segmentation.py tests/test_langgraph_service.py
 ```
 
-## Validação de Tipos
+A suite inclui testes de:
 
-```bash
-npm run lint    # Executa TypeScript sem emitir ficheiros (--noEmit)
-```
+- segmentação de cláusulas;
+- recuperação de artigos;
+- contradições fortes;
+- cláusulas ambíguas;
+- fontes oficiais indisponíveis;
+- avaliação por cláusula;
+- agregação do veredito contratual;
+- tradução de classificações;
+- comportamento de performance no navegador.
 
-## Documentação Adicional
+## Dados e proveniência
 
-- [`.env.example`](.env.example) - Guia completo de configuração
-- `agent/langgraph_service.py` - Detalhes da cadeia de análise
-- `agent/segmentation.py` - Algoritmo de segmentação de cláusulas
+A aplicação distingue entre:
 
-## Funcionalidades Futuras
+- **Corpus**: evidência do subconjunto CUAD local;
+- **Documento do utilizador**: texto carregado ou introduzido na aplicação;
+- **Análise em tempo real**: resultado produzido pelo serviço LangGraph;
+- **Análise local de contingência**: resultado determinístico quando o serviço ou uma fonte não estão disponíveis;
+- **Exemplos de demonstração**: casos pré-carregados para explorar a interface.
 
-- ✅ Integração com modelos LLM locais via Ollama
-- ✅ Suporte a múltiplas línguas
-- ✅ Exportação de relatórios em PDF
-- ✅ Integração com bases de dados legais em tempo real
-- ✅ Modo colaborativo para análise em equipa
+Esta proveniência deve ser considerada na interpretação dos resultados.
 
-## Notas de Desenvolvimento
+## Limitações
 
-### Serviço LangGraph
+O JustiViz é um protótipo académico e não fornece aconselhamento jurídico. A avaliação atual combina recuperação de fontes oficiais, extração de disposições, regras determinísticas e, quando configurado, um modelo externo para anotações e auditoria. Não constitui prova automática de validade ou nulidade de uma cláusula.
 
-O serviço Python inicia automaticamente quando `npm run dev` é executado. O servidor Express age como proxy para as endpoints da API.
+As fontes oficiais podem estar indisponíveis, devolver HTML insuficiente ou usar formatos diferentes. Nestes casos, a aplicação assinala incerteza e recomenda revisão profissional. A análise de uma cláusula isolada também pode não refletir definições, anexos, remissões ou contexto de todo o contrato.
 
-O Express inicia o serviço em `127.0.0.1:8001`.
-
-**Endpoints da API:**
-- `POST /api/analyze-contract` - Analisar contrato
-- `POST /api/segment-contract` - Segmentar cláusulas
-- `POST /api/audit-faithfulness` - Auditoria de fidelidade
-
-### Corpus CUAD Local
-
-O serviço usa um corpus CUAD local em `agent/cuad_corpus.json` com recuperação vetorial baseada em TF-IDF e similaridade de cosseno. O corpus pode ser substituído ou ampliado com um subconjunto maior de `CUADv1.json`, preservando os campos:
-- Categoria
-- Resposta anotada
-- Documento de origem
-- Contexto (para auditoria da evidência)
-
-### Tratamento de Erros
-
-Se o serviço LangGraph falhar ao iniciar:
-1. Verifique se Python 3.10+ está instalado: `python --version`
-2. Verifique as dependências Python: `pip install -r requirements.txt`
-3. Consulte os registos de erro no terminal do servidor
-
-A aplicação continua a funcionar com um modo de demonstração fallback quando o serviço não está disponível.
-
-### Performance
-
-O projeto inclui utilitários de monitorização de performance:
-- `src/utils/fps.ts` - Monitor de FPS
-- `tests/performance.test.ts` - Benchmarks
-- `tests/browser-performance.spec.ts` - Testes de performance do navegador
-
-### Variáveis de Ambiente Opcionais
-
-A chave Groq (`GROQ_API_KEY`) é opcional e não deve ser colocada no código ou frontend. Sem a chave, o LangGraph continua a executar, usando validação local para as tarefas secundárias (anotações e auditoria).
-
-## Limitações e Enquadramento
-
-**JustiViz é um protótipo académico e demonstrador de interação**, desenvolvido para estudar apresentação, exploração e validação de resultados de agentes de IA.
-
-⚠️ **Não fornece aconselhamento jurídico, não substitui profissionais qualificados e não deve ser utilizado como único fundamento para decisões contratuais.**
-
-As análises locais, os casos de estudo e as auditorias simuladas servem para demonstrar os conceitos da aplicação. A qualidade das respostas de um modelo externo depende da configuração do serviço, do texto fornecido e dos mecanismos de validação disponíveis.
-
-## Trabalho Futuro: Modelos Locais via Ollama
-
-Está prevista a integração de **modelos LLM locais através do Ollama** para realizar as tarefas que atualmente são simuladas:
-- Classificação de risco
-- Anotações gerativas
-- Auditoria de fidelidade
-- Apoio à síntese das recomendações
-
-A arquitetura foi desenvolvida considerando esta evolução. O LangGraph funciona como camada de orquestração dos diferentes estados e nós do processo, permitindo substituir progressivamente a lógica determinística e os marcadores simulados por chamadas a modelos locais, mantendo a estrutura da narrativa, do grafo, dos dados técnicos e da validação humana.
+As alternativas rejeitadas são explicações estruturadas para auditoria da decisão, não uma transcrição da cadeia privada de pensamento de um modelo.
 
 ## Autoria
 
-Projeto desenvolvido no âmbito da Licenciatura em Engenharia Multimédia, com foco na aplicação de técnicas de visualização narrativa à explicabilidade de agentes de inteligência artificial.
+Projeto desenvolvido no âmbito da Licenciatura em Engenharia Multimédia, com foco na visualização narrativa, interação humano-máquina e explicabilidade de agentes de inteligência artificial aplicados à análise contratual.
