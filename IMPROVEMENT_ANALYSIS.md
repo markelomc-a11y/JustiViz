@@ -124,7 +124,7 @@ Em modo Macro, o utilizador vê a narrativa e a evidência principal. Em modo Mi
 - variáveis de estado;
 - notas de auditoria.
 
-Quando não há uma métrica real no rasto, a interface apresenta `N/D`. O contador FPS foi removido da interface principal para evitar confundir uma métrica de renderização com uma métrica jurídica ou de fidelidade.
+Quando não há uma métrica real no rasto, a interface apresenta `N/D`.
 
 ## 5. Arquitetura técnica
 
@@ -160,7 +160,7 @@ O serviço em `agent/langgraph_service.py` contém:
 - construção dos cinco passos;
 - auditoria de fidelidade;
 - síntese do veredito;
-- integração opcional com Groq para anotações e auditoria secundária.
+- integração com Groq para anotações e auditoria secundária.
 
 ## 6. Fluxo de dados
 
@@ -291,7 +291,7 @@ Os testes cobrem:
 - análise completa de cinco passos;
 - análise independente de cláusulas;
 - seleção da fonte pelo referencial jurídico;
-- integração opcional da auditoria Groq;
+- integração da auditoria;
 - extração de artigos;
 - contradições fortes;
 - cláusulas ambíguas;
@@ -303,7 +303,7 @@ Quando `pytest` não está instalado no ambiente de desenvolvimento, os cenário
 
 ### Validação do navegador
 
-O projeto inclui uma configuração Playwright para validar a aplicação em navegador e recolher métricas de performance durante o scroll. Estas métricas são de teste e não são apresentadas como dados jurídicos na interface.
+O projeto inclui uma configuração Playwright para validar a aplicação em navegador e recolher métricas de performance durante o scroll.
 
 ## 12. Limitações conhecidas
 
